@@ -1,0 +1,14 @@
+.container{
+    background-color: rgb(55, 88, 49);
+    padding: .5em;
+}
+
+.list {
+    display: flex;
+    list-style: none;
+}
+
+.list li{
+    margin-right: 1em;
+
+}
