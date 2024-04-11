@@ -10,5 +10,14 @@
 
 .list li{
     margin-right: 1em;
+}
 
+.link {
+    color: black;
+    transition: all .4s;
+    text-decoration: none;
+}
+
+.link:hover{
+    color: aqua;
 }

@@ -6,8 +6,8 @@ function Header() {
         <>
             <div className={styles.container}>
                 <ul className={styles.list}>
-                    <li><Link to="/">Inicio</Link></li>
-                    <li><Link to="/reservas">Reservas</Link></li>
+                    <li><Link className={styles.link} to="/">Inicio</Link></li>
+                    <li><Link className={styles.link}to="/reservas">Reservas</Link></li>
                 </ul>
             </div>
 
