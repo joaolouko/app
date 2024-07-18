@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Header from "../layout/Header"
 import axios from 'axios'
+import styles from './Inicio.module.css';
+import { Link } from "react-router-dom";
 
 function Inicio() {
 
@@ -21,19 +23,36 @@ function Inicio() {
     return (
 
         <>
-        <Header/>
-            <div>
-                <h1>pagina de inicio</h1>
-                <h2>salas disponiveis</h2>
-                <ul>
-                {data && data.map((item, index) => (
-                        <>
-                            <li key={index}>nome: {item.nome}</li>
-                        </>
-                    ))}
-                </ul>
-                    
-               
+            <Header />
+            <div className={styles.container}>
+                <div className={styles.box1}>
+                    <div className={styles.reservar}>
+                        <Link className={styles.link}>Reservar sala</Link>
+                    </div>
+                    <div className={styles.verReserva}>
+                        <Link className={styles.link}>Ver reservas</Link>
+                    </div>
+                </div>
+                <div className={styles.box2}>
+
+                    <div className={styles.minhaReserva}>
+                        <ul>
+                            <li>sala 20</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        Salas reservadas
+                    </div>
+
+                    <div>
+                        Meu perfil
+                    </div>
+
+
+                </div>
+
+
             </div>
         </>
     )

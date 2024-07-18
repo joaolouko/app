@@ -1,9 +1,12 @@
+
 .container{
-    background-color: rgb(55, 88, 49);
+    background-color: #373737;
     padding: .5em;
+    display: flex;
 }
 
 .list {
+    margin-left: 1em;
     display: flex;
     list-style: none;
 }
@@ -13,7 +16,6 @@
 }
 
 .link {
-    color: black;
     transition: all .4s;
     text-decoration: none;
 }

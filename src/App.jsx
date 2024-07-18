@@ -2,7 +2,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import './App.css'
 import Inicio from './components/pages/Inicio'
-import Reservas from './components/pages/Reservas'
 
 function App() {
 
@@ -11,7 +10,6 @@ function App() {
       <BrowserRouter>
       <Routes>
         <Route path='/' element={<Inicio/>}/>
-        <Route path='/reservas' element={<Reservas/>}/>
       </Routes>
       </BrowserRouter>
     </>
