@@ -2,6 +2,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import './App.css'
 import Inicio from './components/pages/Inicio'
+import ReservarSala from './components/pages/ReservarSala'
 
 function App() {
 
@@ -10,6 +11,7 @@ function App() {
       <BrowserRouter>
       <Routes>
         <Route path='/' element={<Inicio/>}/>
+        <Route path='/reservar' element={<ReservarSala/>}/>
       </Routes>
       </BrowserRouter>
     </>

@@ -27,7 +27,7 @@ function Inicio() {
             <div className={styles.container}>
                 <div className={styles.box1}>
                     <div className={styles.reservar}>
-                        <Link className={styles.link}>Reservar sala</Link>
+                        <Link className={styles.link} to='/reservar'>Reservar sala</Link>
                     </div>
                     <div className={styles.verReserva}>
                         <Link className={styles.link}>Ver reservas</Link>
@@ -36,17 +36,48 @@ function Inicio() {
                 <div className={styles.box2}>
 
                     <div className={styles.minhaReserva}>
+                        <h1>Minhas Reservas</h1>
                         <ul>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
                             <li>sala 20</li>
                         </ul>
                     </div>
 
-                    <div>
-                        Salas reservadas
+                    <div className={styles.salasReservadas}>
+                        <h1>Salas reservadas</h1>
+                        <ul>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                            <li>sala 20</li>
+                        </ul>
                     </div>
 
-                    <div>
-                        Meu perfil
+                    <div className={styles.meuPerfil}>
+                        <h1>Meu perfil</h1>
+                        <h2>foto de perfil</h2>
+                        <select name="" id="">
+                            <option selected value="1">Aluno</option>
+                            <option value="2">Servidor</option>
+                        </select>
                     </div>
 
 
