@@ -1,14 +1,11 @@
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-
 # Site de reservas de salas do IFC de Sombrio
 
+### Alguns dos recursos utilizados no projeto: React.JS, MongoDB, Express.JS e outros.
+
 ## Dia 17/97
-Foi se iniciado as coisas 
+Foi se iniciado as coisas (Criação da página inicial e etc)
+
+## Dia 31/07
+implementação do mongoDB como banco de dados do projeto.
+
+Algumas Salas foram desde já adicionadas ao banco de dados

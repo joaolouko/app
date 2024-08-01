@@ -11,7 +11,7 @@ function Inicio() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/api/data');
+                const response = await axios.get('http://localhost:3001/dados');
                 setData(response.data);
             } catch (error) {
                 console.error('Erro ao buscar dados:', error);
@@ -38,36 +38,22 @@ function Inicio() {
                     <div className={styles.minhaReserva}>
                         <h1>Minhas Reservas</h1>
                         <ul>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
+                            {data.map((item, index) => (
+                                !item.occuped && <li key={index}>{item.nome}</li>
+                            ))}
+                    
                         </ul>
                     </div>
 
                     <div className={styles.salasReservadas}>
                         <h1>Salas reservadas</h1>
                         <ul>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
-                            <li>sala 20</li>
+                        <ul>
+                            {data.map((item, index) => (
+                                item.occuped && <li key={index}>{item.nome}</li>
+                            ))}
+                    
+                        </ul>
                         </ul>
                     </div>
 

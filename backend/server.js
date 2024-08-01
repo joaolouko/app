@@ -1,50 +1,46 @@
 const express = require('express');
-const cors = require('cors');
-const mysql = require('mysql');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
-const app = express();
-const port = 5000;
+// Substitua '<password>' pela senha real do usuário 'pires'
+const uri = "mongodb+srv://pires:13795272@perezdb.mfxofrn.mongodb.net/teste?retryWrites=true&w=majority";
 
-app.use(bodyParser.json());
-app.use(cors());
-app.use(express.json());
-
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'Petereval123@',
-    database: 'dbtestes',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+const client = new MongoClient(uri, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
 });
 
-app.get('/api/data/', (req, res) => {
-    pool.getConnection((err, connection) => {
-        if (err) {
-            console.error('Erro ao conectar ao banco de dados:', err);
-            res.status(500).json({ status: 'error', error: 'Erro interno do servidor' });
-            return;
-        }
-        
-        // Primeira consulta: Selecionando todos os registros da tabela tbcurso
-        connection.query('SELECT * FROM clientes', (error1, results1) => {
-            if (error1) {
-                connection.release();
-                console.error('Erro ao consultar dados:', error1);
-                res.status(500).json({ status: 'error', error: 'Erro interno do servidor' });
-                return;
-            }
+const app = express();
+const port = 3001;
 
-            res.json(results1)
-            // Segunda consulta: Selecionando todos os registros da tabela tborientador
-            connection.release()
-        });
-    });
+app.use(cors());
+app.use(bodyParser.json());
+
+app.get('/dados', async (req, res) => {
+    try {
+        await client.connect();
+        const database = client.db('teste');  // Nome do banco de dados
+        const collection = database.collection('salas');  // Nome da coleção
+
+        const nomeFiltro = req.query.nome || '';  // Obter o valor do parâmetro de consulta 'nome'
+        const query = nomeFiltro ? { nome: new RegExp(nomeFiltro, 'i') } : {};  // Usar expressão regular para filtro case-insensitive
+
+        const cursor = collection.find(query, { projection: { _id: 0, nome: 1, occuped: 1 } });
+
+        const todosOsNomes = await cursor.toArray();
+
+        res.json(todosOsNomes);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Erro ao buscar dados');
+    }
 });
 
 
 app.listen(port, () => {
-    console.log(`Servidor funcionando na porta ${port}`);
+    console.log(`Servidor rodando em http://localhost:${port}`);
 });
