@@ -9,3 +9,7 @@ Foi se iniciado as coisas (Criação da página inicial e etc)
 implementação do mongoDB como banco de dados do projeto.
 
 Algumas Salas foram desde já adicionadas ao banco de dados
+
+## Dia 04/08
+
+sistema de login feito e funcionando completamente
