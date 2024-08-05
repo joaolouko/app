@@ -12,7 +12,7 @@ function Header() {
             <div className={styles.container}>
                 <FontAwesomeIcon icon={faBars} size="2xl"/>
                 <ul className={styles.list}>
-                    <li><Link className={styles.link} to="/">Inicio</Link></li>
+                    <li><Link className={styles.link} to="/inicio">Inicio</Link></li>
                 </ul>
             </div>
 

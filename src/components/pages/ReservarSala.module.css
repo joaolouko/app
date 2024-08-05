@@ -1,0 +1,11 @@
+.container {
+    height: 90%;
+}
+
+.box{
+    padding: 2em;
+}
+
+.box ul {
+    list-style: none;
+}

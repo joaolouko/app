@@ -61,7 +61,7 @@ function Inicio() {
                         <h1>Meu perfil</h1>
                         <h2>foto de perfil</h2>
                         <select name="" id="">
-                            <option selected value="1">Aluno</option>
+                            <option defaultValue value="1">Aluno</option>
                             <option value="2">Servidor</option>
                         </select>
                     </div>
