@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
@@ -22,29 +22,37 @@ const port = 3001;
 app.use(cors());
 app.use(bodyParser.json()); // Certifique-se de que isso está configurado
 
+const JWT_SECRET = 'your_jwt_secret'; // Substitua por uma chave secreta forte
+
+const authenticateToken = (req, res, next) => {
+    const token = req.header('Authorization')?.split(' ')[1];
+    if (!token) return res.sendStatus(401);
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403);
+        req.user = user;
+        next();
+    });
+};
+
+
 // GET para pegar as salas do banco de dados
-app.get('/dados', async (req, res) => {
+app.get('/dados', authenticateToken, async (req, res) => {
     try {
         await client.connect();
-        const database = client.db('teste');  // Nome do banco de dados
-        const collection = database.collection('salas');  // Nome da coleção
-
-        const nomeFiltro = req.query.nome || '';  // Obter o valor do parâmetro de consulta 'nome'
-        const query = nomeFiltro ? { nome: new RegExp(nomeFiltro, 'i') } : {};  // Usar expressão regular para filtro case-insensitive
-
-        const cursor = collection.find(query, { projection: { _id: 0, nome: 1, occuped: 1 } });
-
-        const todosOsNomes = await cursor.toArray();
-
-        res.json(todosOsNomes);
+        const database = client.db('teste');
+        const collection = database.collection('salas');
+        const dados = await collection.find({}).toArray();
+        res.json(dados);
     } catch (error) {
         console.error(error);
-        res.status(500).send('Erro ao buscar dados');
+        res.status(500).json({ message: 'Erro ao buscar dados' });
+    } finally {
+        await client.close();
     }
 });
 
 
-const JWT_SECRET = 'your_jwt_secret'; // Substitua por uma chave secreta forte
 
 app.post('/login', async (req, res) => {
     try {
@@ -72,6 +80,84 @@ app.post('/login', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erro ao fazer login' });
+    } finally {
+        await client.close();
+    }
+});
+
+app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { userId, nome } = req.user;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'ID inválido' });
+        }
+
+        await client.connect();
+        const database = client.db('teste');
+        const collection = database.collection('salas');
+
+        const result = await collection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { occuped: true, userId: new ObjectId(userId), reservadoPor: nome } }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ message: 'Sala não encontrada' });
+        }
+
+        res.json({ message: 'Sala reservada com sucesso' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao reservar sala' });
+    } finally {
+        await client.close();
+    }
+});
+
+
+app.get('/minhas-reservas', authenticateToken, async (req, res) => {
+    try {
+        const { userId } = req.user;
+        await client.connect();
+        const database = client.db('teste');
+        const collection = database.collection('salas');
+        const reservas = await collection.find({ userId: new ObjectId(userId), occuped: true }).toArray();
+        res.json(reservas);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao buscar reservas' });
+    } finally {
+        await client.close();
+    }
+});
+
+app.put('/admin/editar-sala/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'ID inválido' });
+        }
+
+        await client.connect();
+        const database = client.db('teste');
+        const collection = database.collection('salas');
+
+        const result = await collection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { occuped: false, userId: null, reservadoPor: null } }  // Remove o status de ocupado
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ message: 'Sala não encontrada' });
+        }
+
+        res.json({ message: 'Status da sala atualizado com sucesso' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao atualizar o status da sala' });
     } finally {
         await client.close();
     }

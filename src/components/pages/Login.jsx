@@ -20,7 +20,11 @@ function Login() {
             const token = response.data.token;
             localStorage.setItem('token', token);
             alert('Login bem-sucedido!');
-            navigate('/inicio'); // Redireciona após o login bem-sucedido
+            if (username === 'Admin' && password === 'adm24'){
+                navigate('/admin'); // Redirecionando para a pagina de adm
+            } else {
+                navigate('/inicio'); // Redireciona após o login bem-sucedido para a pagina de inicio
+            }
         } catch (err) {
             setError('Credenciais inválidas');
             console.error(err.response ? err.response.data : err.message); // Adicione isto para depuração

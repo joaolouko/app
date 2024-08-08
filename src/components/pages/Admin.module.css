@@ -1,0 +1,31 @@
+.container {
+    margin: 20px;
+}
+
+.salaItem {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.btn {
+    transition: all .3s;
+    background-color: rgb(99, 112, 116);
+}
+
+.btn:hover{
+    background-color: rgb(29, 28, 28);
+}

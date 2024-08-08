@@ -3,12 +3,16 @@
     background-color: #373737;
     padding: .5em;
     display: flex;
+    align-items: center;
 }
 
 .list {
     margin-left: 1em;
     display: flex;
     list-style: none;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .list li{
@@ -22,4 +26,17 @@
 
 .link:hover{
     color: aqua;
+}
+
+.btn {
+    transition: all .3s;
+    background-color: rgb(99, 112, 116);
+}
+
+.btn:hover{
+    background-color: rgb(29, 28, 28);
+}
+
+.btnli{
+    text-align: center;
 }
