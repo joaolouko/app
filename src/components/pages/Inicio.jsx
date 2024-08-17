@@ -7,15 +7,20 @@ import { Link, useNavigate } from "react-router-dom";
 function Inicio() {
 
     const [data, setData] = useState([]);
+    const [nomeUsuario, setNomeUsuario] = useState('');
     const navigate = useNavigate();
 
+
+
     useEffect(() => {
+        const nome = localStorage.getItem('nomeUsuario')
         const token = localStorage.getItem('token');
         if (!token) {
             navigate('/'); // Redireciona para a página de login se o token não estiver presente
             return;
         }
 
+        setNomeUsuario(nome);
         const fetchData = async () => {
             try {
                 const response = await axios.get('http://localhost:3001/dados', {
@@ -70,7 +75,7 @@ function Inicio() {
                     </div>
 
                     <div className={styles.meuPerfil}>
-                        <h1>Meu perfil</h1>
+                        <h1>{nomeUsuario}</h1>
                         <h2>foto de perfil</h2>
                         <select name="" id="">
                             <option defaultValue value="1">Aluno</option>

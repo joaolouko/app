@@ -9,6 +9,8 @@ function Login() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
+    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         console.log('Enviando:', { nome: username, senha: password }); // Adicione isto para depuração
@@ -18,8 +20,11 @@ function Login() {
                 senha: password,
             });
             const token = response.data.token;
+            const role = response.data.role;
+
+            localStorage.setItem('role', role)
             localStorage.setItem('token', token);
-            alert('Login bem-sucedido!');
+            localStorage.setItem('nomeUsuario', username)
             if (username === 'Admin' && password === 'adm24'){
                 navigate('/admin'); // Redirecionando para a pagina de adm
             } else {

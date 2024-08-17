@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import styles from './VerReservas.module.css'; // Supondo que você tenha um arquivo CSS para estilos
+import Header from '../layout/Header'
 
 function VerReservas() {
     const [reservas, setReservas] = useState([]);
@@ -27,6 +28,7 @@ function VerReservas() {
 
     return (
         <>
+            <Header/>
             <h1>Minhas Reservas</h1>
             <ul>
                 {reservas.map((reserva, index) => (

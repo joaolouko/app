@@ -4,10 +4,11 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const http = require('http');
+const { Server } = require('socket.io');
 
 // Conexão com MongoDB
 const uri = "mongodb+srv://pires:13795272@perezdb.mfxofrn.mongodb.net/teste?retryWrites=true&w=majority";
-
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -16,13 +17,35 @@ const client = new MongoClient(uri, {
     }
 });
 
+// Conectando ao MongoDB fora dos handlers para manter a conexão aberta
+async function connectToDatabase() {
+    try {
+        await client.connect();
+        console.log('Conectado ao MongoDB com sucesso!');
+    } catch (error) {
+        console.error('Erro ao conectar ao MongoDB:', error);
+    }
+}
+connectToDatabase();
+
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*'
+    }
+});
 const port = 3001;
 
 app.use(cors());
-app.use(bodyParser.json()); // Certifique-se de que isso está configurado
+app.use(bodyParser.json());
+app.use(express.json());
 
 const JWT_SECRET = 'your_jwt_secret'; // Substitua por uma chave secreta forte
+
+const notifySalaChange = () => {
+    io.emit('updateSalas');
+};
 
 const authenticateToken = (req, res, next) => {
     const token = req.header('Authorization')?.split(' ')[1];
@@ -35,11 +58,16 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+const authorizeAdmin = (req, res, next) => {
+    if (!req.user || !req.user.admin) {
+        return res.sendStatus(403); // Forbidden
+    }
+    next();
+};
 
 // GET para pegar as salas do banco de dados
 app.get('/dados', authenticateToken, async (req, res) => {
     try {
-        await client.connect();
         const database = client.db('teste');
         const collection = database.collection('salas');
         const dados = await collection.find({}).toArray();
@@ -47,21 +75,16 @@ app.get('/dados', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erro ao buscar dados' });
-    } finally {
-        await client.close();
     }
 });
 
-
-
 app.post('/login', async (req, res) => {
     try {
-        const { nome, senha } = req.body; // Verifique se os nomes das propriedades estão corretos
+        const { nome, senha } = req.body;
         if (!nome || !senha) {
             return res.status(400).json({ message: 'Nome e senha são necessários' });
         }
 
-        await client.connect();
         const database = client.db('teste');
         const collection = database.collection('usuarios');
 
@@ -80,8 +103,6 @@ app.post('/login', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erro ao fazer login' });
-    } finally {
-        await client.close();
     }
 });
 
@@ -94,7 +115,6 @@ app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
             return res.status(400).json({ message: 'ID inválido' });
         }
 
-        await client.connect();
         const database = client.db('teste');
         const collection = database.collection('salas');
 
@@ -102,7 +122,7 @@ app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
             { _id: new ObjectId(id) },
             { $set: { occuped: true, userId: new ObjectId(userId), reservadoPor: nome } }
         );
-
+        notifySalaChange();
         if (result.matchedCount === 0) {
             return res.status(404).json({ message: 'Sala não encontrada' });
         }
@@ -111,16 +131,12 @@ app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erro ao reservar sala' });
-    } finally {
-        await client.close();
     }
 });
-
 
 app.get('/minhas-reservas', authenticateToken, async (req, res) => {
     try {
         const { userId } = req.user;
-        await client.connect();
         const database = client.db('teste');
         const collection = database.collection('salas');
         const reservas = await collection.find({ userId: new ObjectId(userId), occuped: true }).toArray();
@@ -128,8 +144,6 @@ app.get('/minhas-reservas', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erro ao buscar reservas' });
-    } finally {
-        await client.close();
     }
 });
 
@@ -141,15 +155,14 @@ app.put('/admin/editar-sala/:id', authenticateToken, async (req, res) => {
             return res.status(400).json({ message: 'ID inválido' });
         }
 
-        await client.connect();
         const database = client.db('teste');
         const collection = database.collection('salas');
 
         const result = await collection.updateOne(
             { _id: new ObjectId(id) },
-            { $set: { occuped: false, userId: null, reservadoPor: null } }  // Remove o status de ocupado
+            { $set: { occuped: false, userId: null, reservadoPor: null } }
         );
-
+        notifySalaChange();
         if (result.matchedCount === 0) {
             return res.status(404).json({ message: 'Sala não encontrada' });
         }
@@ -158,11 +171,50 @@ app.put('/admin/editar-sala/:id', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erro ao atualizar o status da sala' });
-    } finally {
-        await client.close();
     }
 });
 
-app.listen(port, () => {
+app.post('/admin/criar-sala', authenticateToken, async (req, res) => {
+    try {
+        const { nome } = req.body;
+
+        const database = client.db('teste');
+        const collection = database.collection('salas');
+
+        const result = await collection.insertOne({ nome, occuped: false, userId: null, reservadoPor: null });
+        notifySalaChange();
+        res.status(201).json({ message: 'Sala criada com sucesso!', id: result.insertedId });
+    } catch (error) {
+        console.error('Erro ao criar sala:', error);
+        res.status(500).json({ message: 'Erro ao criar sala', error: error.message });
+    }
+});
+
+app.delete('/admin/excluir-sala/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'ID inválido' });
+        }
+
+        const database = client.db('teste');
+        const collection = database.collection('salas');
+
+        const result = await collection.deleteOne({ _id: new ObjectId(id) });
+        notifySalaChange();
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: 'Sala não encontrada' });
+        }
+
+        res.json({ message: 'Sala excluída com sucesso' });
+    } catch (error) {
+        console.error('Erro ao excluir sala:', error);
+        res.status(500).json({ message: 'Erro ao excluir sala' });
+    }
+});
+
+server.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}`);
 });
