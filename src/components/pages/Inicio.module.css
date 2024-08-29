@@ -53,22 +53,9 @@
     background-color: #373737;
 }
 
-.minhaReserva {
-    background-color: #373737;
-    width: 30%;
-
-}
-
-.minhaReserva ul {
-    max-height: 10em;
-    overflow-y: auto;
-    list-style: none;
-}
-
-
 .salasReservadas {
     background-color: #373737;
-    width: 30%;
+    width: 50%;
 }
 
 .salasReservadas ul{

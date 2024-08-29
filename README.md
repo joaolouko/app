@@ -27,3 +27,6 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 
 ### Dia 17/08
 - **Melhorias e Hot Reload:** Implementação de hot reload na página de administração para atualização automática das informações das salas sem a necessidade de recarregar a página. Correções de bugs e refinamentos no fluxo de reserva e gerenciamento de salas.
+
+### Dia 28/08
+- **Função de Reserva por Dia e Aula:** Adicionada a funcionalidade de reserva por dia e aula na página de administração. Agora, as reservas podem ser gerenciadas e visualizadas com base nos dias e aulas específicos, permitindo um controle mais detalhado sobre a disponibilidade das salas.

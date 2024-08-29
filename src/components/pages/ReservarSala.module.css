@@ -9,3 +9,46 @@
 .box ul {
     list-style: none;
 }
+
+.react-calendar {
+  background-color: #f0f0f0; /* Cor de fundo do calendário */
+  border-radius: 10px; /* Bordas arredondadas */
+  padding: 20px; /* Espaçamento interno */
+  border: 1px solid #ddd; /* Borda */
+}
+
+/* Dias do calendário */
+.react-calendar__tile {
+  background: #fff; /* Cor de fundo dos dias */
+  color: #333; /* Cor do texto dos dias */
+  border-radius: 5px; /* Bordas arredondadas dos dias */
+  padding: 10px; /* Espaçamento interno dos dias */
+}
+
+/* Dia selecionado */
+.react-calendar__tile--active {
+  background: #4caf50; /* Cor de fundo para o dia selecionado */
+  color: #fff; /* Cor do texto do dia selecionado */
+}
+
+/* Dia atual */
+.react-calendar__tile--now {
+  background: #ffeb3b; /* Cor de fundo para o dia atual */
+  color: #333; /* Cor do texto do dia atual */
+}
+
+/* Dias ao passar o mouse */
+.react-calendar__tile:hover {
+  background: #e0e0e0; /* Cor de fundo ao passar o mouse sobre os dias */
+}
+
+/* Barra de navegação */
+.react-calendar__navigation button {
+  background-color: #4caf50; /* Cor de fundo dos botões de navegação */
+  color: white; /* Cor do texto dos botões */
+  border: none; /* Remover borda dos botões */
+}
+
+.react-calendar__navigation button:hover {
+  background-color: #388e3c; /* Cor ao passar o mouse sobre os botões de navegação */
+}

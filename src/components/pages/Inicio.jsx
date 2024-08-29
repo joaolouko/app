@@ -1,26 +1,25 @@
 import { useEffect, useState } from "react";
-import Header from "../layout/Header"
-import axios from 'axios'
+import Header from "../layout/Header";
+import axios from 'axios';
 import styles from './Inicio.module.css';
 import { Link, useNavigate } from "react-router-dom";
 
 function Inicio() {
-
     const [data, setData] = useState([]);
     const [nomeUsuario, setNomeUsuario] = useState('');
     const navigate = useNavigate();
 
-
-
     useEffect(() => {
-        const nome = localStorage.getItem('nomeUsuario')
+        const nome = localStorage.getItem('nomeUsuario');
         const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId');
         if (!token) {
             navigate('/'); // Redireciona para a página de login se o token não estiver presente
             return;
         }
 
         setNomeUsuario(nome);
+
         const fetchData = async () => {
             try {
                 const response = await axios.get('http://localhost:3001/dados', {
@@ -36,9 +35,8 @@ function Inicio() {
         };
         fetchData();
     }, [navigate]);
-    console.log(data)
-    return (
 
+    return (
         <>
             <Header />
             <div className={styles.container}>
@@ -51,26 +49,21 @@ function Inicio() {
                     </div>
                 </div>
                 <div className={styles.box2}>
-
-                    <div className={styles.minhaReserva}>
-                        <h1>Minhas Reservas</h1>
-                        <ul>
-                            {data.map((item, index) => (
-                                !item.occuped && <li key={index}>{item.nome}</li>
-                            ))}
                     
-                        </ul>
-                    </div>
-
                     <div className={styles.salasReservadas}>
                         <h1>Salas reservadas</h1>
                         <ul>
-                        <ul>
-                            {data.map((item, index) => (
-                                item.occuped && <li key={index}>{item.nome} por {item.reservadoPor}</li>
+                            {data.map((sala, salaIndex) => (
+                                sala.dias.map((dia, diaIndex) => (
+                                    dia.aulas.map((aula, aulaIndex) => (
+                                        aula.occuped && (
+                                            <li key={`${salaIndex}-${diaIndex}-${aulaIndex}`}>
+                                                {sala.nome} - {aula.aula} por {aula.reservadoPor} em {dia.data}
+                                            </li>
+                                        )
+                                    ))
+                                ))
                             ))}
-                    
-                        </ul>
                         </ul>
                     </div>
 
@@ -82,14 +75,10 @@ function Inicio() {
                             <option value="2">Servidor</option>
                         </select>
                     </div>
-
-
                 </div>
-
-
             </div>
         </>
-    )
+    );
 }
 
-export default Inicio
+export default Inicio;
