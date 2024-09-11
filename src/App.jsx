@@ -6,6 +6,7 @@ import Login from './components/pages/Login';
 import Admin from './components/pages/Admin';
 import PrivateRoute from './components/PrivateRoute';
 import VerReservas from './components/pages/VerReservas';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
     return (

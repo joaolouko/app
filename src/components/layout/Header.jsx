@@ -1,9 +1,5 @@
-import { Link, useNavigate } from "react-router-dom"
-import styles from "./Header.module.css"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faBars } from "@fortawesome/free-solid-svg-icons"
-
-
+import { Link, useNavigate } from "react-router-dom";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Header() {
 
@@ -16,17 +12,23 @@ function Header() {
 
     return (
         <>
-
-            <div className={styles.container}>
-                <FontAwesomeIcon icon={faBars} size="2xl"/>
-                <ul className={styles.list}>
-                    <li><Link className={styles.link} to="/inicio">Inicio</Link></li>
-                    <li><button className={styles.btn} onClick={handleLogout}>Sair</button></li>
-                </ul>
-            </div>
-
+            <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+                <div className="container-fluid">
+                    <Link className="navbar-brand" to="/inicio">Início</Link>
+                    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span className="navbar-toggler-icon"></span>
+                    </button>
+                    <div className="collapse navbar-collapse" id="navbarNav">
+                        <ul className="navbar-nav ms-auto">
+                            <li className="nav-item">
+                                <button className="btn btn-danger" onClick={handleLogout}>Sair</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
         </>
-    )
+    );
 }
 
-export default Header
+export default Header;

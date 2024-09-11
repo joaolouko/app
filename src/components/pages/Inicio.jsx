@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import Header from "../layout/Header";
 import axios from 'axios';
-import styles from './Inicio.module.css';
 import { Link, useNavigate } from "react-router-dom";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Inicio() {
     const [data, setData] = useState([]);
@@ -36,44 +36,53 @@ function Inicio() {
         fetchData();
     }, [navigate]);
 
+    // Função para formatar a data no padrão brasileiro
+    const formatarDataBrasileira = (data) => {
+        const dataObj = new Date(data); // Transforma em um objeto Date
+        return dataObj.toLocaleDateString('pt-BR'); // Retorna a data formatada no padrão brasileiro
+    };
+
     return (
         <>
             <Header />
-            <div className={styles.container}>
-                <div className={styles.box1}>
-                    <div className={styles.reservar}>
-                        <Link className={styles.link} to='/reservar'>Reservar sala</Link>
+            <div className="container mt-4 bg-dark text-light p-4 rounded">
+                <div className="row">
+                    <div className="col-md-6">
+                        <div className="d-grid gap-3">
+                            <Link className="btn btn-primary" to='/reservar'>Reservar sala</Link>
+                            <Link className="btn btn-secondary" to='/ver-reserva'>Ver minhas reservas</Link>
+                        </div>
                     </div>
-                    <div className={styles.verReserva}>
-                        <Link className={styles.link} to='/ver-reserva'>Ver reservas</Link>
+                    <div className="col-md-6">
+                        <div className="card bg-dark text-light">
+                            <div className="card-body">
+                                <h5 className="card-title">Salas reservadas</h5>
+                                <ul className="list-group list-group-flush bg-dark text-light">
+                                    {data.map((sala, salaIndex) => (
+                                        sala.dias.map((dia, diaIndex) => (
+                                            dia.aulas.map((aula, aulaIndex) => (
+                                                aula.occuped && (
+                                                    <li className="list-group-item bg-dark text-light" key={`${salaIndex}-${diaIndex}-${aulaIndex}`}>
+                                                        {sala.nome} - {aula.aula} por {aula.reservadoPor} em {formatarDataBrasileira(dia.data)}
+                                                    </li>
+                                                )
+                                            ))
+                                        ))
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div className={styles.box2}>
-                    
-                    <div className={styles.salasReservadas}>
-                        <h1>Salas reservadas</h1>
-                        <ul>
-                            {data.map((sala, salaIndex) => (
-                                sala.dias.map((dia, diaIndex) => (
-                                    dia.aulas.map((aula, aulaIndex) => (
-                                        aula.occuped && (
-                                            <li key={`${salaIndex}-${diaIndex}-${aulaIndex}`}>
-                                                {sala.nome} - {aula.aula} por {aula.reservadoPor} em {dia.data}
-                                            </li>
-                                        )
-                                    ))
-                                ))
-                            ))}
-                        </ul>
-                    </div>
 
-                    <div className={styles.meuPerfil}>
-                        <h1>{nomeUsuario}</h1>
-                        <h2>foto de perfil</h2>
-                        <select name="" id="">
-                            <option defaultValue value="1">Aluno</option>
-                            <option value="2">Servidor</option>
-                        </select>
+                <div className="row mt-4">
+                    <div className="col-md-12">
+                        <div className="card bg-dark text-light">
+                            <div className="card-body text-center">
+                                <h5 className="card-title">{nomeUsuario}</h5>
+                                <h6 className="card-subtitle mb-2 text-muted">Foto de perfil</h6>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -45,10 +45,10 @@ function Admin() {
     const handleEditSala = async (salaId) => {
         try {
             const selectedReserva = selectedReservas[salaId];
-            const [date, aulaIndex] = selectedReserva ? selectedReserva.split('-').map((val, index) => index === 1 ? Number(val) : val) : [null, null];
+            const [diaIndex, aulaIndex] = selectedReserva ? selectedReserva.split('-').map((val, index) => index === 1 ? Number(val) : val) : [null, null];
     
-            if (selectedReserva !== null) {
-                await axios.put(`http://localhost:3001/admin/remover-ocupacao/${salaId}`, { date, aulaIndex }, {
+            if (selectedReserva != null) {
+                await axios.put(`http://localhost:3001/admin/remover-ocupacao/${salaId}`, { diaIndex, aulaIndex }, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }

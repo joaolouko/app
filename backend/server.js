@@ -204,7 +204,29 @@ app.get('/minhas-reservas', authenticateToken, async (req, res) => {
         const { userId } = req.user;
         const database = client.db('teste');
         const collection = database.collection('salas');
-        const reservas = await collection.find({ 'reservas.userId': new ObjectId(userId), 'reservas.occuped': true }).toArray();
+        
+        // Buscar todas as salas que contêm reservas feitas pelo usuário
+        const reservas = await collection.aggregate([
+            { $unwind: "$dias" }, // "desenrolar" os dias
+            { $unwind: "$dias.aulas" }, // "desenrolar" as aulas
+            { 
+                $match: { 
+                    "dias.aulas.occuped": true, 
+                    "dias.aulas.userId": new ObjectId(userId) 
+                } 
+            }, // Encontrar apenas as aulas reservadas pelo usuário
+            {
+                $project: {
+                    _id: 1,
+                    nome: 1,
+                    "dias.data": 1,
+                    "dias.aulas.aula": 1,
+                    "dias.aulas.reservadoPor": 1,
+                    "dias.aulas.userId": 1
+                }
+            }
+        ]).toArray();
+
         res.json(reservas);
     } catch (error) {
         console.error(error);
@@ -212,12 +234,56 @@ app.get('/minhas-reservas', authenticateToken, async (req, res) => {
     }
 });
 
-// PUT para editar o status de ocupação de uma aula específica
+// Rota para cancelar uma reserva
+app.delete('/cancelar-reserva/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { aulaIndex, date } = req.body;
+        const { userId } = req.user;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'ID da sala inválido' });
+        }
+
+        const database = client.db('teste');
+        const collection = database.collection('salas');
+
+        // Verificar se a sala existe
+        const sala = await collection.findOne({ _id: new ObjectId(id) });
+        if (!sala) {
+            return res.status(404).json({ message: 'Sala não encontrada' });
+        }
+
+        // Encontrar e cancelar a reserva
+        const result = await collection.updateOne(
+            { _id: new ObjectId(id), "dias.data": date, [`dias.aulas.${aulaIndex}.userId`]: new ObjectId(userId) },
+            {
+                $set: {
+                    [`dias.$.aulas.${aulaIndex}.occuped`]: false,
+                    [`dias.$.aulas.${aulaIndex}.userId`]: null,
+                    [`dias.$.aulas.${aulaIndex}.reservadoPor`]: null
+                }
+            }
+        );
+
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ message: 'Reserva não encontrada ou já cancelada' });
+        }
+
+        notifySalaChange();
+        res.json({ message: 'Reserva cancelada com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao cancelar a reserva:', error);
+        res.status(500).json({ message: 'Erro ao cancelar a reserva' });
+    }
+});
+
+
 // PUT para o administrador remover a ocupação de uma aula específica
 app.put('/admin/remover-ocupacao/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { date, aulaIndex } = req.body;
+        const { diaIndex, aulaIndex } = req.body;
 
         if (!ObjectId.isValid(id)) {
             return res.status(400).json({ message: 'ID inválido' });
@@ -226,29 +292,26 @@ app.put('/admin/remover-ocupacao/:id', authenticateToken, async (req, res) => {
         const database = client.db('teste');
         const collection = database.collection('salas');
 
-        const query = {
-            _id: new ObjectId(id),
-            "dias.data": date,
-            [`dias.$.aulas.${aulaIndex}.occuped`]: true
-        };
-        const update = {
-            $set: {
-                [`dias.$.aulas.${aulaIndex}.occuped`]: false,
-                [`dias.$.aulas.${aulaIndex}.userId`]: null,
-                [`dias.$.aulas.${aulaIndex}.reservadoPor`]: null
+        const result = await collection.updateOne(
+            { _id: new ObjectId(id), [`dias.${diaIndex}.aulas.${aulaIndex}.occuped`]: true },
+            {
+                $set: {
+                    [`dias.${diaIndex}.aulas.${aulaIndex}.occuped`]: false,
+                    [`dias.${diaIndex}.aulas.${aulaIndex}.userId`]: null,
+                    [`dias.${diaIndex}.aulas.${aulaIndex}.reservadoPor`]: null
+                }
             }
-        };
-
-        const result = await collection.updateOne(query, update);
+        );
 
         if (result.matchedCount === 0) {
-            return res.status(404).json({ message: 'Aula ou sala não encontrada ou já está desocupada' });
+            return res.status(404).json({ message: 'Sala ou aula não encontrada' });
         }
 
-        notifySalaChange();
+        io.emit('updateSalas', {salaId: id})
+
         res.json({ message: 'Ocupação removida com sucesso!' });
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao remover ocupação da aula:', error);
         res.status(500).json({ message: 'Erro ao remover ocupação' });
     }
 });
