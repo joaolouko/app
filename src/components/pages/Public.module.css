@@ -1,0 +1,21 @@
+/* Public.module.css */
+.sala {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.dia {
+    margin-top: 10px;
+}
+
+.occupied {
+    color: red;
+    font-weight: bold;
+}
+
+.available {
+    color: green;
+    font-weight: bold;
+}

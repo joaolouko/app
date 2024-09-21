@@ -9,8 +9,6 @@ function Login() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         console.log('Enviando:', { nome: username, senha: password }); // Adicione isto para depuração
@@ -22,20 +20,24 @@ function Login() {
             const token = response.data.token;
             const role = response.data.role;
 
-            localStorage.setItem('role', role)
+            localStorage.setItem('role', role);
             localStorage.setItem('token', token);
-            localStorage.setItem('nomeUsuario', username)
-            if (username === 'Admin' && password === 'adm24'){
-                navigate('/admin'); // Redirecionando para a pagina de adm
+            localStorage.setItem('nomeUsuario', username);
+            if (username === 'Admin' && password === 'adm24') {
+                navigate('/admin'); // Redirecionando para a página de admin
             } else {
-                navigate('/inicio'); // Redireciona após o login bem-sucedido para a pagina de inicio
+                navigate('/inicio'); // Redireciona após o login bem-sucedido para a página de início
             }
         } catch (err) {
             setError('Credenciais inválidas');
             console.error(err.response ? err.response.data : err.message); // Adicione isto para depuração
         }
     };
-    
+
+    // Função para voltar à página anterior
+    const handleBack = () => {
+        navigate('/'); // Voltar para a página anterior
+    };
 
     return (
         <div className={styles.container}>
@@ -57,6 +59,7 @@ function Login() {
                     {error && <p className={styles.error}>{error}</p>}
                     <button type="submit">Login</button>
                 </form>
+                <button onClick={handleBack}>Voltar</button>
             </div>
         </div>
     );

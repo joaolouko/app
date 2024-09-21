@@ -216,13 +216,26 @@ app.get('/minhas-reservas', authenticateToken, async (req, res) => {
                 } 
             }, // Encontrar apenas as aulas reservadas pelo usuário
             {
+                $group: {
+                    _id: "$_id",
+                    nome: { $first: "$nome" },
+                    dias: {
+                        $push: {
+                            data: "$dias.data",
+                            aulas: {
+                                aula: "$dias.aulas.aula",
+                                reservadoPor: "$dias.aulas.reservadoPor",
+                                userId: "$dias.aulas.userId"
+                            }
+                        }
+                    }
+                }
+            },
+            {
                 $project: {
                     _id: 1,
                     nome: 1,
-                    "dias.data": 1,
-                    "dias.aulas.aula": 1,
-                    "dias.aulas.reservadoPor": 1,
-                    "dias.aulas.userId": 1
+                    dias: 1 // Garantindo que o campo `dias` seja um array
                 }
             }
         ]).toArray();
@@ -234,12 +247,13 @@ app.get('/minhas-reservas', authenticateToken, async (req, res) => {
     }
 });
 
+
 // Rota para cancelar uma reserva
 app.delete('/cancelar-reserva/:id', authenticateToken, async (req, res) => {
     try {
-        const { id } = req.params;
-        const { aulaIndex, date } = req.body;
-        const { userId } = req.user;
+        const { id } = req.params; // ID da sala
+        const { aulaIndex, date } = req.query; // Pegando os dados da query string
+        const { userId } = req.user; // ID do usuário
 
         if (!ObjectId.isValid(id)) {
             return res.status(400).json({ message: 'ID da sala inválido' });
@@ -254,9 +268,13 @@ app.delete('/cancelar-reserva/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ message: 'Sala não encontrada' });
         }
 
-        // Encontrar e cancelar a reserva
+        // Atualizar a reserva
         const result = await collection.updateOne(
-            { _id: new ObjectId(id), "dias.data": date, [`dias.aulas.${aulaIndex}.userId`]: new ObjectId(userId) },
+            {
+                _id: new ObjectId(id),
+                "dias.data": date, // Filtra pela data correta
+                [`dias.aulas.${aulaIndex}.userId`]: new ObjectId(userId) // Verifica se a aula pertence ao usuário
+            },
             {
                 $set: {
                     [`dias.$.aulas.${aulaIndex}.occuped`]: false,
@@ -277,6 +295,8 @@ app.delete('/cancelar-reserva/:id', authenticateToken, async (req, res) => {
         res.status(500).json({ message: 'Erro ao cancelar a reserva' });
     }
 });
+
+
 
 
 // PUT para o administrador remover a ocupação de uma aula específica
@@ -371,6 +391,20 @@ app.delete('/admin/excluir-sala/:id', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Erro ao excluir sala:', error);
         res.status(500).json({ message: 'Erro ao excluir sala' });
+    }
+});
+
+app.get('/public/reservas', async (req, res) => {
+    try {
+        const database = client.db('teste');
+        const collection = database.collection('salas');
+
+        const reservas = await collection.find({}).toArray();
+        
+        res.json(reservas);
+    } catch (error) {
+        console.error('Erro ao buscar reservas:', error);
+        res.status(500).json({ message: 'Erro ao buscar reservas' });
     }
 });
 

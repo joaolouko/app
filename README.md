@@ -1,3 +1,6 @@
+
+---
+
 # Site de Reservas de Salas do IFC de Sombrio
 
 Este projeto tem como objetivo a criação de um sistema de reservas de salas para o Instituto Federal Catarinense (IFC) de Sombrio. O sistema permite que usuários façam login, reservem salas disponíveis e os administradores gerenciem as salas através de uma interface dedicada.
@@ -60,6 +63,11 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 
 - **Nota sobre Bugs:** Identificado um bug que impede a remoção de reservas próprias. Os usuários estão enfrentando dificuldades ao tentar cancelar suas próprias reservas.
 
+### Dia 21/09 Alpha 1.2.1
+- **Criação da Página Pública:** Implementação da página pública, permitindo que usuários vejam as salas reservadas sem a necessidade de login.
+
+- **Correções de Bugs:** Realizados bugfixes em relação a algumas datas, garantindo uma melhor usabilidade e precisão nas reservas.
+
 ## Como Rodar o Projeto
 
 1. **Clone o repositório:**
@@ -87,8 +95,8 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 4. **Inicie o servidor:**
 
    ```bash
-    cd backend
-    node server.js
+   cd backend
+   node server.js
    ```
 
 5. **Inicie o frontend (separado):**
@@ -99,4 +107,4 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
    npm run dev
    ```
 
----
+--- 

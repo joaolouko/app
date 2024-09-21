@@ -18,6 +18,7 @@ function VerReservas() {
                     },
                 });
                 setReservas(response.data);
+                console.log(response.data);
             } catch (err) {
                 setError('Erro ao buscar reservas');
                 console.error(err.response ? err.response.data : err.message);
@@ -27,7 +28,7 @@ function VerReservas() {
         fetchReservas();
     }, []);
 
-    const handleCancelarReserva = async (reservaId, salaId, aulaIndex, data) => {
+    const handleCancelarReserva = async (salaId, aulaIndex, data) => {
         try {
             if (!salaId || salaId.length !== 24) {
                 throw new Error('ID da sala inválido');
@@ -35,21 +36,24 @@ function VerReservas() {
     
             const token = localStorage.getItem('token');
     
+            // Passar aulaIndex e data como query params
             await axios.delete(
-                `http://localhost:3001/cancelar-reserva/${salaId}`,
+                `http://localhost:3001/cancelar-reserva/${salaId}?aulaIndex=${aulaIndex}&date=${data}`,
                 {
-                    data: {
-                        aulaIndex,
-                        date: data,
-                    },
                     headers: { Authorization: `Bearer ${token}` },
                 }
             );
     
-            setReservas(
-                reservas.filter((reserva) => reserva._id !== reservaId) // Remover a reserva da lista ao cancelar
-            );
+            // Atualizar o estado removendo a reserva cancelada
+            const updatedReservas = reservas.map((reserva) => {
+                if (reserva._id === salaId) {
+                    const updatedDias = reserva.dias.filter((dia, index) => index !== aulaIndex);
+                    return { ...reserva, dias: updatedDias };
+                }
+                return reserva;
+            }).filter(reserva => reserva.dias.length > 0); // Remover reserva se todos os dias forem removidos
     
+            setReservas(updatedReservas);
             setSuccessMessage('Reserva cancelada com sucesso!');
         } catch (err) {
             setError(err.response ? err.response.data.message : err.message);
@@ -68,30 +72,21 @@ function VerReservas() {
                 {successMessage && <div className="alert alert-success">{successMessage}</div>}
 
                 <ul className="list-group">
-                    {reservas.length > 0 ? (
-                        reservas.map((reserva, index) => (
-                            <li key={index} className="list-group-item bg-secondary text-light d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>Sala:</strong> {reserva.salaNome} <br />
-                                    <strong>Aula:</strong> {reserva.aula} <br />
-                                    <strong>Data:</strong> {new Date(reserva.data).toLocaleDateString('pt-BR')}
-                                </div>
-                                <button
-                                    className="btn btn-danger"
-                                    onClick={() =>
-                                        handleCancelarReserva(
-                                            reserva._id,
-                                            reserva.salaId,
-                                            reserva.aulaIndex,
-                                            reserva.data
-                                        )
-                                    }
-                                >
-                                    Cancelar Reserva
-                                </button>
-                            </li>
-                        ))
-                    ) : (
+                    {reservas.length > 0 ? reservas.map((reserva, index) => (
+                        <li key={index} className="list-group-item bg-secondary text-light d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Sala:</strong> {reserva.nome} <br />
+                                <strong>Aula:</strong> {reserva.dias && reserva.dias.length > 0 && reserva.dias[0].aulas ? reserva.dias[0].aulas.aula : 'Informações de aula não disponíveis'} <br />
+                                <strong>Data:</strong> {reserva.dias && reserva.dias.length > 0 && reserva.dias[0].data ? new Date(reserva.dias[0].data).toLocaleDateString('pt-BR') : 'Informações de data não disponíveis'}
+                            </div>
+                            <button
+                                className="btn btn-danger"
+                                onClick={() => handleCancelarReserva(reserva._id, index, reserva.dias[0].data)}
+                            >
+                                Cancelar Reserva
+                            </button>
+                        </li>
+                    )) : (
                         <li className="list-group-item bg-secondary text-light">Você não possui reservas.</li>
                     )}
                 </ul>

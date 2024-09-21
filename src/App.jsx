@@ -7,12 +7,14 @@ import Admin from './components/pages/Admin';
 import PrivateRoute from './components/PrivateRoute';
 import VerReservas from './components/pages/VerReservas';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import Public from './components/pages/Public';
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path='/' element={<Login />} />
+                <Route path='/' element={<Public/>} />
+                <Route path='/login' element={<Login/>}/>
                 <Route path='/reservar' element={<PrivateRoute><ReservarSala /></PrivateRoute>} />
                 <Route path='/ver-reserva' element={<PrivateRoute><VerReservas /></PrivateRoute>} />
                 <Route path='/inicio' element={<PrivateRoute><Inicio /></PrivateRoute>} />
