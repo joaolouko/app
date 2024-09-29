@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../layout/Header';
 import { Calendar } from 'primereact/calendar';
+import {addLocale} from 'primereact/api'
 import 'primereact/resources/themes/bootstrap4-dark-blue/theme.css';  // Tema escuro para o calendário do PrimeReact
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
@@ -94,6 +95,19 @@ function ReservarSala() {
         setSelectedSala(null);
     };
 
+    addLocale('pt-BR', {
+        firstDayOfWeek: 1,
+        dayNames: ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"],
+        dayNamesShort: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"],
+        dayNamesMin: ["D", "S", "T", "Q", "Q", "S", "S"],
+        monthNames: ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"],
+        monthNamesShort: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
+        today: "Hoje",
+        clear: "Limpar",
+        dateFormat: 'dd/mm/yy',
+        weekHeader: 'Sm',
+        chooseDate: 'Escolha uma data'  // chave necessária conforme o erro
+    });
     const ptBR = {
         firstDayOfWeek: 1,
         dayNames: ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"],
@@ -121,7 +135,7 @@ function ReservarSala() {
                             <Calendar
                                 value={date}
                                 onChange={(e) => handleDateChange(e.value)}
-
+                                locale='pt-BR'
                                 dateFormat='dd/mm/yy'
                                 showIcon
                                 className="w-100 bg-dark text-light"  // Tema escuro no calendário
@@ -152,7 +166,7 @@ function ReservarSala() {
 
                             <ul className="list-group bg-dark text-light">
                                 {data.map((item) => {
-                                    const formattedDate = date.toISOString().split('T')[0];
+                                    const formattedDate = date.toLocaleDateString('en-CA'); 
                                     const dia = item.dias.find(dia => dia.data === formattedDate);
                                     const aulaIndex = parseInt(selectedAula.split(' ')[1]) - 1;
 

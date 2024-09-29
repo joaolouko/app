@@ -7,6 +7,7 @@ import Admin from './components/pages/Admin';
 import PrivateRoute from './components/PrivateRoute';
 import VerReservas from './components/pages/VerReservas';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Importando o JavaScript do Bootstrap
 import Public from './components/pages/Public';
 
 function App() {

@@ -29,3 +29,20 @@ button:disabled {
 .btn:hover{
     background-color: rgb(29, 28, 28);
 }
+
+/* Admin.module.css */
+.form-select {
+    background-color: #343a40; /* Cor de fundo escura */
+    color: #ffffff; /* Cor do texto clara */
+    border: 1px solid #495057; /* Cor da borda */
+}
+
+.form-select option {
+    background-color: #343a40; /* Cor de fundo escura para opções */
+    color: #ffffff; /* Cor do texto clara para opções */
+}
+
+.form-select:focus {
+    border-color: #80bdff; /* Borda azul no foco */
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Sombra azul no foco */
+}

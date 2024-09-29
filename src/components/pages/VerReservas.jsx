@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import 'bootstrap/dist/css/bootstrap.min.css'; // Importar Bootstrap CSS
+import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from '../layout/Header';
+import { Link, useNavigate } from 'react-router-dom';
 
 function VerReservas() {
-    const [reservas, setReservas] = useState([]);
+    const [salas, setSalas] = useState([]);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchReservas = async () => {
@@ -17,8 +19,18 @@ function VerReservas() {
                         Authorization: `Bearer ${token}`,
                     },
                 });
-                setReservas(response.data);
-                console.log(response.data);
+
+                console.log('Dados recebidos:', response.data); // Log dos dados recebidos
+
+                const reservasFormatadas = response.data.map(reserva => ({
+                    ...reserva,
+                    dias: reserva.dias.map(dia => ({
+                        ...dia,
+                        aulas: Array.isArray(dia.aulas) ? dia.aulas : [] // Garantir que aulas sejam um array
+                    }))
+                }));
+
+                setSalas(reservasFormatadas);
             } catch (err) {
                 setError('Erro ao buscar reservas');
                 console.error(err.response ? err.response.data : err.message);
@@ -28,69 +40,92 @@ function VerReservas() {
         fetchReservas();
     }, []);
 
+    const formatDate = (dateString) => {
+        const [year, month, day] = dateString.split('-');
+        return `${day}/${month}/${year}`;
+    };
+
     const handleCancelarReserva = async (salaId, aulaIndex, data) => {
         try {
-            if (!salaId || salaId.length !== 24) {
-                throw new Error('ID da sala inválido');
-            }
-    
             const token = localStorage.getItem('token');
-    
-            // Passar aulaIndex e data como query params
             await axios.delete(
                 `http://localhost:3001/cancelar-reserva/${salaId}?aulaIndex=${aulaIndex}&date=${data}`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
             );
-    
-            // Atualizar o estado removendo a reserva cancelada
-            const updatedReservas = reservas.map((reserva) => {
+
+            const updatedSalas = salas.map((reserva) => {
                 if (reserva._id === salaId) {
-                    const updatedDias = reserva.dias.filter((dia, index) => index !== aulaIndex);
+                    const updatedDias = reserva.dias.map(dia => ({
+                        ...dia,
+                        aulas: dia.aulas.filter((_, index) => index !== aulaIndex) // Filtrar a aula cancelada
+                    })).filter(dia => dia.aulas.length > 0); // Remove dias sem aulas
+
                     return { ...reserva, dias: updatedDias };
                 }
                 return reserva;
-            }).filter(reserva => reserva.dias.length > 0); // Remover reserva se todos os dias forem removidos
-    
-            setReservas(updatedReservas);
+            }).filter(reserva => reserva.dias.length > 0); // Remove salas sem reservas
+
+            setSalas(updatedSalas);
             setSuccessMessage('Reserva cancelada com sucesso!');
         } catch (err) {
             setError(err.response ? err.response.data.message : err.message);
             console.error(err.response ? err.response.data : err.message);
         }
     };
-    
 
     return (
         <>
             <Header />
-            <div className="container mt-4 bg-dark text-light">
+            <div className="container mt-4 bg-dark text-light p-4 rounded">
                 <h1 className="mb-4">Minhas Reservas</h1>
-
+    
                 {error && <div className="alert alert-danger">{error}</div>}
                 {successMessage && <div className="alert alert-success">{successMessage}</div>}
-
-                <ul className="list-group">
-                    {reservas.length > 0 ? reservas.map((reserva, index) => (
-                        <li key={index} className="list-group-item bg-secondary text-light d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Sala:</strong> {reserva.nome} <br />
-                                <strong>Aula:</strong> {reserva.dias && reserva.dias.length > 0 && reserva.dias[0].aulas ? reserva.dias[0].aulas.aula : 'Informações de aula não disponíveis'} <br />
-                                <strong>Data:</strong> {reserva.dias && reserva.dias.length > 0 && reserva.dias[0].data ? new Date(reserva.dias[0].data).toLocaleDateString('pt-BR') : 'Informações de data não disponíveis'}
+    
+                {salas.length > 0 ? (
+                    salas.map((sala, index) => (
+                        <div key={index} className="card bg-secondary text-light mb-4">
+                            <div className="card-header bg-dark">
+                                <h2>{sala.nome}</h2>
                             </div>
-                            <button
-                                className="btn btn-danger"
-                                onClick={() => handleCancelarReserva(reserva._id, index, reserva.dias[0].data)}
-                            >
-                                Cancelar Reserva
-                            </button>
-                        </li>
-                    )) : (
-                        <li className="list-group-item bg-secondary text-light">Você não possui reservas.</li>
-                    )}
-                </ul>
+                            <div className="card-body">
+                                {sala.dias.map((dia, diaIndex) => (
+                                    <div key={diaIndex} className="mb-3">
+                                        <h4 className="mb-2">Data: {formatDate(dia.data)}</h4>
+                                        <ul className="list-group">
+                                            {dia.aulas // Aqui você deve verificar se as aulas estão presentes
+                                                .filter(aula => aula.occuped) // Filtragem aqui
+                                                .map((aula, aulaIndex) => (
+                                                    <li
+                                                        key={aulaIndex}
+                                                        className={`list-group-item d-flex justify-content-between align-items-center list-group-item-danger`}
+                                                    >
+                                                        {aula.aula}
+                                                        <span className="badge badge-pill text-danger">
+                                                            {`Reservado por ${aula.reservadoPor}`}
+                                                        </span>
+                                                        <button
+                                                            className="btn btn-danger"
+                                                            onClick={() => handleCancelarReserva(sala._id, aulaIndex, dia.data)}
+                                                        >
+                                                            Cancelar Reserva
+                                                        </button>
+                                                    </li>
+                                                ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-center">Você não possui reservas no momento.</p>
+                )}
+                <Link to='/inicio' className="btn btn-secondary mt-4">Voltar</Link>
             </div>
+            
         </>
     );
 }

@@ -201,48 +201,48 @@ app.get('/reservas/:id/:date', authenticateToken, async (req, res) => {
 // GET para buscar as reservas de um usuário
 app.get('/minhas-reservas', authenticateToken, async (req, res) => {
     try {
-        const { userId } = req.user;
+        const { userId } = req.user; // Obtendo o ID do usuário autenticado
         const database = client.db('teste');
         const collection = database.collection('salas');
-        
-        // Buscar todas as salas que contêm reservas feitas pelo usuário
-        const reservas = await collection.aggregate([
-            { $unwind: "$dias" }, // "desenrolar" os dias
-            { $unwind: "$dias.aulas" }, // "desenrolar" as aulas
-            { 
-                $match: { 
-                    "dias.aulas.occuped": true, 
-                    "dias.aulas.userId": new ObjectId(userId) 
-                } 
-            }, // Encontrar apenas as aulas reservadas pelo usuário
-            {
-                $group: {
-                    _id: "$_id",
-                    nome: { $first: "$nome" },
-                    dias: {
-                        $push: {
-                            data: "$dias.data",
-                            aulas: {
-                                aula: "$dias.aulas.aula",
-                                reservadoPor: "$dias.aulas.reservadoPor",
-                                userId: "$dias.aulas.userId"
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    nome: 1,
-                    dias: 1 // Garantindo que o campo `dias` seja um array
-                }
-            }
-        ]).toArray();
 
-        res.json(reservas);
+        // Buscar todas as salas
+        const salas = await collection.find({}).toArray();
+
+        // Filtrar reservas de cada sala para o usuário autenticado
+        const reservas = salas.map(sala => {
+            const diasReservados = sala.dias.map(dia => {
+                const aulasReservadas = dia.aulas.filter(aula => 
+                    aula.occuped && aula.userId.toString() === userId // Filtra as aulas ocupadas pelo usuário
+                );
+
+                // Retornar apenas os dias que contêm aulas reservadas
+                if (aulasReservadas.length > 0) {
+                    return {
+                        data: dia.data,
+                        aulas: aulasReservadas.map(aula => ({
+                            aula: aula.aula,
+                            reservadoPor: aula.reservadoPor,
+                            userId: aula.userId
+                        }))
+                    };
+                }
+                return null; // Retorna null se não houver aulas reservadas
+            }).filter(dia => dia !== null); // Remove dias sem reservas
+
+            // Retornar sala apenas se tiver dias reservados
+            if (diasReservados.length > 0) {
+                return {
+                    _id: sala._id,
+                    nome: sala.nome,
+                    dias: diasReservados
+                };
+            }
+            return null; // Retorna null se não houver dias reservados
+        }).filter(sala => sala !== null); // Remove salas sem reservas
+
+        res.json(reservas); // Retorna as reservas filtradas
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao buscar reservas:', error);
         res.status(500).json({ message: 'Erro ao buscar reservas' });
     }
 });

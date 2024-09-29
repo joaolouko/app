@@ -38,8 +38,10 @@ function Inicio() {
 
     // Função para formatar a data no padrão brasileiro
     const formatarDataBrasileira = (data) => {
-        const dataObj = new Date(data); // Transforma em um objeto Date
-        return dataObj.toLocaleDateString('pt-BR'); // Retorna a data formatada no padrão brasileiro
+        const dataObj = new Date(data + 'T00:00:00'); // Transforma em um objeto Date
+        return dataObj.toLocaleDateString('pt-BR', {
+            timeZone: 'America/Sao_Paulo'
+        }); 
     };
 
     return (
@@ -79,7 +81,7 @@ function Inicio() {
                     <div className="col-md-12">
                         <div className="card bg-dark text-light">
                             <div className="card-body text-center">
-                                <h5 className="card-title">{nomeUsuario}</h5>
+                                <h5 className="card-title">Usuário atual: {nomeUsuario}</h5>
                                 <h6 className="card-subtitle mb-2 text-muted">Foto de perfil</h6>
                             </div>
                         </div>
