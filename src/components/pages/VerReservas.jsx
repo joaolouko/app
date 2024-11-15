@@ -1,131 +1,116 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from '../layout/Header';
-import { Link, useNavigate } from 'react-router-dom';
 
 function VerReservas() {
     const [salas, setSalas] = useState([]);
-    const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+    const [message, setMessage] = useState(''); // Estado para armazenar a mensagem
     const navigate = useNavigate();
+    const userId = localStorage.getItem('userId'); // Assumindo que você salva o ID do usuário no localStorage
 
     useEffect(() => {
         const fetchReservas = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const response = await axios.get('http://localhost:3001/minhas-reservas', {
+                const response = await axios.get('http://localhost:3001/dados', {
                     headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
                 });
-
-                console.log('Dados recebidos:', response.data); // Log dos dados recebidos
-
-                const reservasFormatadas = response.data.map(reserva => ({
-                    ...reserva,
-                    dias: reserva.dias.map(dia => ({
-                        ...dia,
-                        aulas: Array.isArray(dia.aulas) ? dia.aulas : [] // Garantir que aulas sejam um array
-                    }))
-                }));
-
-                setSalas(reservasFormatadas);
-            } catch (err) {
-                setError('Erro ao buscar reservas');
-                console.error(err.response ? err.response.data : err.message);
+                setSalas(response.data);
+            } catch (error) {
+                console.error('Erro ao buscar reservas:', error);
             }
         };
 
         fetchReservas();
     }, []);
 
-    const formatDate = (dateString) => {
-        const [year, month, day] = dateString.split('-');
-        return `${day}/${month}/${year}`;
-    };
-
-    const handleCancelarReserva = async (salaId, aulaIndex, data) => {
+    const handleCancelReservation = async (salaId, diaIndex, aulaIndex) => {
         try {
-            const token = localStorage.getItem('token');
-            await axios.delete(
-                `http://localhost:3001/cancelar-reserva/${salaId}?aulaIndex=${aulaIndex}&date=${data}`,
+            // Envia a requisição PUT para o backend, cancelando a reserva
+            await axios.put(`http://localhost:3001/usuario/cancelar-reserva/${salaId}`, 
+                { 
+                    diaIndex, 
+                    aulaIndex 
+                }, 
                 {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
 
-            const updatedSalas = salas.map((reserva) => {
-                if (reserva._id === salaId) {
-                    const updatedDias = reserva.dias.map(dia => ({
+            // Define a mensagem de sucesso
+            setMessage('Reserva cancelada com sucesso!');
+
+            // Remove a reserva da lista local apenas visualmente
+            setSalas((prevSalas) => {
+                return prevSalas.map(sala => ({
+                    ...sala,
+                    dias: sala.dias.map((dia, dIndex) => ({
                         ...dia,
-                        aulas: dia.aulas.filter((_, index) => index !== aulaIndex) // Filtrar a aula cancelada
-                    })).filter(dia => dia.aulas.length > 0); // Remove dias sem aulas
+                        aulas: dia.aulas.map((aula, aIndex) => {
+                            // Verifica se a aula corresponde ao índice correto
+                            if (dIndex === diaIndex && aIndex === aulaIndex) {
+                                return { ...aula, occuped: false }; // Marca a reserva como não ocupada
+                            }
+                            return aula;
+                        })
+                    }))
+                }));
+            });
 
-                    return { ...reserva, dias: updatedDias };
-                }
-                return reserva;
-            }).filter(reserva => reserva.dias.length > 0); // Remove salas sem reservas
-
-            setSalas(updatedSalas);
-            setSuccessMessage('Reserva cancelada com sucesso!');
-        } catch (err) {
-            setError(err.response ? err.response.data.message : err.message);
-            console.error(err.response ? err.response.data : err.message);
+            // Limpa a mensagem após 1.5 segundos
+            setTimeout(() => {
+                setMessage('');
+            }, 1500);
+        } catch (error) {
+            console.error('Erro ao cancelar reserva:', error);
+            setMessage('Erro ao cancelar reserva.');
         }
     };
 
     return (
         <>
-            <Header />
-            <div className="container mt-4 bg-dark text-light p-4 rounded">
-                <h1 className="mb-4">Minhas Reservas</h1>
-    
-                {error && <div className="alert alert-danger">{error}</div>}
-                {successMessage && <div className="alert alert-success">{successMessage}</div>}
-    
-                {salas.length > 0 ? (
-                    salas.map((sala, index) => (
-                        <div key={index} className="card bg-secondary text-light mb-4">
-                            <div className="card-header bg-dark">
-                                <h2>{sala.nome}</h2>
-                            </div>
-                            <div className="card-body">
-                                {sala.dias.map((dia, diaIndex) => (
-                                    <div key={diaIndex} className="mb-3">
-                                        <h4 className="mb-2">Data: {formatDate(dia.data)}</h4>
-                                        <ul className="list-group">
-                                            {dia.aulas // Aqui você deve verificar se as aulas estão presentes
-                                                .filter(aula => aula.occuped) // Filtragem aqui
-                                                .map((aula, aulaIndex) => (
-                                                    <li
-                                                        key={aulaIndex}
-                                                        className={`list-group-item d-flex justify-content-between align-items-center list-group-item-danger`}
-                                                    >
-                                                        {aula.aula}
-                                                        <span className="badge badge-pill text-danger">
-                                                            {`Reservado por ${aula.reservadoPor}`}
-                                                        </span>
-                                                        <button
-                                                            className="btn btn-danger"
-                                                            onClick={() => handleCancelarReserva(sala._id, aulaIndex, dia.data)}
-                                                        >
-                                                            Cancelar Reserva
-                                                        </button>
-                                                    </li>
-                                                ))}
-                                        </ul>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <p className="text-center">Você não possui reservas no momento.</p>
-                )}
-                <Link to='/inicio' className="btn btn-secondary mt-4">Voltar</Link>
-            </div>
-            
+        <Header />
+        <div className="container mt-5 bg-dark text-light p-4">
+            <h2>Cancelar Reservas</h2>
+
+            {/* Exibe a mensagem de sucesso ou erro acima das reservas */}
+            {message && (
+                <div className="alert alert-info" role="alert">
+                    {message}
+                </div>
+            )}
+
+            {salas.length > 0 ? (
+                <ul className="list-group mt-3">
+                    {salas.map((sala) => (
+                        sala.dias.map((dia, diaIndex) => (
+                            dia.aulas.map((aula, aulaIndex) => (
+                                aula.occuped && aula.userId === userId && (
+                                    <li key={`${sala._id}-${diaIndex}-${aulaIndex}`} className="list-group-item bg-secondary text-light">
+                                        <p><strong>Sala:</strong> {sala.nome}</p>
+                                        <p><strong>Data:</strong> {dia.data || 'Data não especificada'}</p>
+                                        <p><strong>Aula:</strong> {aula.aula || 'Aula não especificada'}</p>
+                                        <button 
+                                            className="btn btn-danger"
+                                            onClick={() => handleCancelReservation(sala._id, diaIndex, aulaIndex)}
+                                        >
+                                            Cancelar Reserva
+                                        </button>
+                                    </li>
+                                )
+                            ))
+                        ))
+                    ))}
+                </ul>
+            ) : (
+                <p>Nenhuma reserva encontrada</p>
+            )}
+            <button className="btn btn-secondary mt-4" onClick={() => navigate('/inicio')}>Voltar</button>
+        </div>
         </>
     );
 }

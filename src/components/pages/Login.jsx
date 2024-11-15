@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styles from './Login.module.css';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,14 @@ function Login() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
+    // Efeito para verificar se o usuário já está logado
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            navigate('/inicio'); // Se o token estiver presente, redireciona para a página inicial
+        }
+    }, [navigate]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         console.log('Enviando:', { nome: username, senha: password }); // Adicione isto para depuração
@@ -18,11 +26,14 @@ function Login() {
                 senha: password,
             });
             const token = response.data.token;
+            const userId = response.data.userId;
             const role = response.data.role;
 
             localStorage.setItem('role', role);
             localStorage.setItem('token', token);
+            localStorage.setItem('userId', userId);
             localStorage.setItem('nomeUsuario', username);
+
             if (username === 'Admin' && password === 'adm24') {
                 navigate('/admin'); // Redirecionando para a página de admin
             } else {

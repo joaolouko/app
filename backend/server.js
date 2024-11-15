@@ -48,15 +48,26 @@ const notifySalaChange = () => {
 };
 
 const authenticateToken = (req, res, next) => {
-    const token = req.header('Authorization')?.split(' ')[1];
-    if (!token) return res.sendStatus(401);
+    const authHeader = req.header('Authorization');
+    const token = authHeader?.split(' ')[1];
+
+    if (!token) {
+        console.error('Token não fornecido');
+        return res.status(401).json({ message: 'Token não fornecido' });
+    }
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.sendStatus(403);
+        if (err) {
+            console.error('Erro na verificação do token:', err.message);
+            return res.status(403).json({ message: 'Token inválido' });
+        }
+
         req.user = user;
+        console.log('Usuário autenticado:', user); // Log para verificar o conteúdo do usuário autenticado
         next();
     });
 };
+
 
 const authorizeAdmin = (req, res, next) => {
     if (!req.user || !req.user.admin) {
@@ -89,23 +100,33 @@ app.post('/login', async (req, res) => {
         const database = client.db('teste');
         const collection = database.collection('usuarios');
 
+        // Procura o usuário no banco de dados
         const user = await collection.findOne({ nome });
         if (!user) {
             return res.status(400).json({ message: 'Credenciais inválidas' });
         }
 
+        // Verifica a senha
         const isPasswordValid = await bcrypt.compare(senha, user.senha);
         if (!isPasswordValid) {
             return res.status(400).json({ message: 'Credenciais inválidas' });
         }
 
+        // Gera o token JWT
         const token = jwt.sign({ userId: user._id, nome: user.nome }, JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token });
+
+        // Retorna o token, userId e outras informações necessárias
+        res.json({ 
+            token, 
+            userId: user._id,  // Envia o userId explicitamente
+            role: user.role || 'user'  // Retorna o role, se existir
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erro ao fazer login' });
     }
 });
+
 
 // PUT para reservar uma aula específica em uma sala em uma data específica
 app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
@@ -248,54 +269,50 @@ app.get('/minhas-reservas', authenticateToken, async (req, res) => {
 });
 
 
-// Rota para cancelar uma reserva
-app.delete('/cancelar-reserva/:id', authenticateToken, async (req, res) => {
+// Rota para cancelar uma reserva específica
+// Rota para cancelar uma reserva específica
+app.put('/usuario/cancelar-reserva/:salaId', async (req, res) => {
+    const { salaId } = req.params;
+    const { diaIndex, aulaIndex } = req.body;
+
     try {
-        const { id } = req.params; // ID da sala
-        const { aulaIndex, date } = req.query; // Pegando os dados da query string
-        const { userId } = req.user; // ID do usuário
-
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({ message: 'ID da sala inválido' });
-        }
-
+        // Lógica para cancelar a reserva
         const database = client.db('teste');
         const collection = database.collection('salas');
 
-        // Verificar se a sala existe
-        const sala = await collection.findOne({ _id: new ObjectId(id) });
+        // Buscar a sala no banco de dados
+        const sala = await collection.findOne({ _id: new ObjectId(salaId) });
         if (!sala) {
             return res.status(404).json({ message: 'Sala não encontrada' });
         }
 
-        // Atualizar a reserva
-        const result = await collection.updateOne(
-            {
-                _id: new ObjectId(id),
-                "dias.data": date, // Filtra pela data correta
-                [`dias.aulas.${aulaIndex}.userId`]: new ObjectId(userId) // Verifica se a aula pertence ao usuário
-            },
-            {
-                $set: {
-                    [`dias.$.aulas.${aulaIndex}.occuped`]: false,
-                    [`dias.$.aulas.${aulaIndex}.userId`]: null,
-                    [`dias.$.aulas.${aulaIndex}.reservadoPor`]: null
-                }
-            }
-        );
-
-        if (result.modifiedCount === 0) {
-            return res.status(404).json({ message: 'Reserva não encontrada ou já cancelada' });
+        // Verificar se a reserva existe
+        const dia = sala.dias[diaIndex];
+        if (!dia) {
+            return res.status(404).json({ message: 'Dia não encontrado' });
         }
 
-        notifySalaChange();
-        res.json({ message: 'Reserva cancelada com sucesso!' });
+        const aula = dia.aulas[aulaIndex];
+        if (!aula || !aula.occuped) {
+            return res.status(404).json({ message: 'Reserva não encontrada' });
+        }
+
+        // Cancelar a reserva
+        aula.occuped = false;
+        aula.userId = null; // Limpar o userId
+
+        // Atualizar a sala no banco de dados
+        await collection.updateOne(
+            { _id: new ObjectId(salaId) },
+            { $set: { [`dias.${diaIndex}.aulas.${aulaIndex}`]: aula } }
+        );
+
+        res.status(200).json({ message: 'Reserva cancelada com sucesso!' });
     } catch (error) {
-        console.error('Erro ao cancelar a reserva:', error);
-        res.status(500).json({ message: 'Erro ao cancelar a reserva' });
+        console.error('Erro ao cancelar reserva:', error);
+        res.status(500).json({ message: 'Erro ao cancelar reserva' });
     }
 });
-
 
 
 

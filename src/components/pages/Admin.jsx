@@ -44,6 +44,7 @@ function Admin() {
 
     const handleEditSala = async (salaId) => {
         try {
+            
             const selectedReserva = selectedReservas[salaId];
             const [diaIndex, aulaIndex] = selectedReserva ? selectedReserva.split('-').map((val, index) => index === 1 ? Number(val) : val) : [null, null];
     
@@ -55,6 +56,7 @@ function Admin() {
                 });
                 setSelectedReservas(prevState => ({ ...prevState, [salaId]: '' }));
             }
+            console.log(`aula: ${aulaIndex} dia: ${diaIndex}`)
         } catch (error) {
             console.error('Erro ao remover ocupação da sala:', error);
         }

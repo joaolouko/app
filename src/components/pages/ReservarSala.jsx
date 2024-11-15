@@ -44,20 +44,31 @@ function ReservarSala() {
             alert('Por favor, selecione uma aula e uma sala antes de reservar.');
             return;
         }
-
+    
         const aulaIndex = parseInt(selectedAula.split(' ')[1]) - 1;
-        const formattedDate = date.toISOString().split('T')[0];
+        const formattedDate = date.toISOString().split('T')[0]; // ISO format
         const token = localStorage.getItem('token');
-
+    
         try {
             const sala = data.find(sala => sala._id === selectedSala._id);
             const diaExistente = sala.dias.find(dia => dia.data === formattedDate);
-
+    
             if (diaExistente) {
-                diaExistente.aulas[aulaIndex] = { ...diaExistente.aulas[aulaIndex], occuped: true };
+                // Atualiza apenas se a aula não estiver ocupada
+                if (!diaExistente.aulas[aulaIndex].occuped) {
+                    diaExistente.aulas[aulaIndex] = {
+                        ...diaExistente.aulas[aulaIndex], 
+                        occuped: true,
+                        userId: localStorage.getItem('userId')
+                    };
+                } else {
+                    alert('Essa aula já está ocupada.');
+                    return;
+                }
             } else {
+                // Adiciona novo dia apenas se a data for válida
                 sala.dias.push({
-                    data: formattedDate,
+                    data: formattedDate,  // Garante que a data não será vazia
                     aulas: [...Array(10).keys()].map((_, index) => ({
                         aula: `Aula ${index + 1}`,
                         occuped: index === aulaIndex,
@@ -65,29 +76,32 @@ function ReservarSala() {
                     })),
                 });
             }
-
+    
+            // Atualiza o banco de dados
             await axios.put(`http://localhost:3001/reservar-sala/${selectedSala._id}`, {
                 aulaIndex,
                 date: formattedDate
             }, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
+    
             alert('Sala reservada com sucesso!');
-
+    
+            // Atualiza o estado local
             setData(data.map(sala =>
                 sala._id === selectedSala._id ? {
                     ...sala,
                     dias: sala.dias
                 } : sala
             ));
-
+    
             setSelectedAula('');
             setSelectedSala(null);
         } catch (error) {
             console.error('Erro ao reservar sala:', error);
         }
     };
+    
 
     const handleDateChange = (newDate) => {
         setDate(newDate);
