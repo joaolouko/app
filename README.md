@@ -36,6 +36,8 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 - **eslint, eslint-plugin-*:** Ferramentas para análise e formatação de código.
 - **vite, @vitejs/plugin-react:** Ferramentas para construção e desenvolvimento de aplicações React.
 
+---
+
 ## Histórico de Desenvolvimento
 
 ### Dia 17/07 Alpha 1.0.0
@@ -68,13 +70,19 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 
 - **Correções de Bugs:** Realizados bugfixes em relação a algumas datas, garantindo uma melhor usabilidade e precisão nas reservas.
 
-
 ### Dia 29/09 Alpha 1.2.2
 - **Correções de Bugs no Bootstrap:** Resolvido o problema de expansão do navbar e aplicadas melhorias de estilização em várias páginas.
 - **Calendário em Português (Brasil):** O sistema agora apresenta o calendário totalmente traduzido para o português brasileiro, melhorando a usabilidade para os usuários.
 - **Outros Bugs Corrigidos:** Incluem ajustes em pequenas funcionalidades e melhorias de performance.
 
-- **Nota sobre bugs:** O bug que impede a remoção de reservas  próprias ainda não foi resolvido. Além de que o sistema agora apresenta um bug de visualização das datas de reservas próprias. 
+- **Nota sobre bugs:** O bug que impede a remoção de reservas próprias ainda não foi resolvido. Além de que o sistema agora apresenta um bug de visualização das datas de reservas próprias.
+
+### Dia 15/11 Beta 1.0.0
+- **Correção de Todos os Bugs:** Foram corrigidos todos os bugs identificados nas versões anteriores, incluindo a remoção de reservas próprias e problemas de visualização de datas de reservas.
+- **Adição do Artigo do Projeto:** Foi adicionado o artigo completo sobre o projeto, detalhando todas as fases de desenvolvimento, decisões tomadas e tecnologias utilizadas.
+- **Melhorias de Desempenho:** O sistema recebeu otimizações para melhorar a performance, com ajustes em como os dados são manipulados no frontend e backend.
+
+---
 
 ## Como Rodar o Projeto
 
