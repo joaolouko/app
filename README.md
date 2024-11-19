@@ -82,6 +82,10 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 - **Adição do Artigo do Projeto:** Foi adicionado o artigo completo sobre o projeto, detalhando todas as fases de desenvolvimento, decisões tomadas e tecnologias utilizadas.
 - **Melhorias de Desempenho:** O sistema recebeu otimizações para melhorar a performance, com ajustes em como os dados são manipulados no frontend e backend.
 
+### Dia 19/11 Beta 1.1.0
+- **Melhorias no Design:** Ajustes realizados para melhorar a interface do usuário, com foco na experiência e usabilidade.
+- **Melhorias na Segurança:** Foram implementadas medidas adicionais de segurança, como proteção contra ataques CSRF, melhorias na validação de entradas e refinamento da autenticação por JWT.
+
 ---
 
 ## Como Rodar o Projeto

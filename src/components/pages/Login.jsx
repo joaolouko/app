@@ -1,79 +1,117 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import styles from './Login.module.css';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import styles from "./Login.module.css";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-    // Efeito para verificar se o usuário já está logado
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            navigate('/inicio'); // Se o token estiver presente, redireciona para a página inicial
-        }
-    }, [navigate]);
+  // Verificar se o usuário já está logado
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/inicio"); // Redireciona para a página inicial se já estiver logado
+    }
+  }, [navigate]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        console.log('Enviando:', { nome: username, senha: password }); // Adicione isto para depuração
-        try {
-            const response = await axios.post('http://localhost:3001/login', {
-                nome: username,
-                senha: password,
-            });
-            const token = response.data.token;
-            const userId = response.data.userId;
-            const role = response.data.role;
+  // Função para salvar os dados do usuário no localStorage
+  const saveUserData = (data) => {
+    localStorage.setItem("role", data.role);
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("userId", data.userId);
+    localStorage.setItem("nomeUsuario", username);
+  };
 
-            localStorage.setItem('role', role);
-            localStorage.setItem('token', token);
-            localStorage.setItem('userId', userId);
-            localStorage.setItem('nomeUsuario', username);
+  // Função de envio do formulário
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-            if (username === 'Admin' && password === 'adm24') {
-                navigate('/admin'); // Redirecionando para a página de admin
-            } else {
-                navigate('/inicio'); // Redireciona após o login bem-sucedido para a página de início
-            }
-        } catch (err) {
-            setError('Credenciais inválidas');
-            console.error(err.response ? err.response.data : err.message); // Adicione isto para depuração
-        }
-    };
+    // Validação simples
+    if (!username || !password) {
+      setError("Por favor, preencha todos os campos.");
+      return;
+    }
 
-    // Função para voltar à página anterior
-    const handleBack = () => {
-        navigate('/'); // Voltar para a página anterior
-    };
+    setIsLoading(true);
+    setError(""); // Limpa qualquer erro anterior
 
-    return (
-        <div className={styles.container}>
-            <div>
-                <h1>Login do Usuário</h1>
-                <form onSubmit={handleSubmit}>
-                    <label>Usuário</label>
-                    <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                    />
-                    <label>Senha</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
-                    {error && <p className={styles.error}>{error}</p>}
-                    <button type="submit">Login</button>
-                </form>
-                <button onClick={handleBack}>Voltar</button>
-            </div>
-        </div>
-    );
+    try {
+      const response = await axios.post("http://localhost:3001/login", {
+        nome: username,
+        senha: password,
+      });
+
+      saveUserData(response.data);
+
+      // Redirecionar com base no tipo de usuário
+      if (username === "Admin" && password === "adm24") {
+        navigate("/admin");
+      } else {
+        navigate("/inicio");
+      }
+    } catch (err) {
+      setError("Credenciais inválidas. Tente novamente.");
+      console.error(err.response ? err.response.data : err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para voltar à página anterior
+  const handleBack = () => {
+    navigate("/");
+  };
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.loginBox}>
+        <h1 className={styles.title}>Login do Usuário</h1>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="username">
+              Usuário
+            </label>
+            <input
+              id="username"
+              className={styles.input}
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Digite seu usuário"
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="password">
+              Senha
+            </label>
+            <input
+              id="password"
+              className={styles.input}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Digite sua senha"
+            />
+          </div>
+          {error && <p className={styles.error}>{error}</p>}
+          <button
+            type="submit"
+            className={styles.button}
+            disabled={isLoading}
+          >
+            {isLoading ? "Carregando..." : "Login"}
+          </button>
+        </form>
+        <button onClick={handleBack} className={`${styles.button} ${styles.backButton}`}>
+          Voltar
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default Login;

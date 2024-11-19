@@ -1,50 +1,82 @@
-/* Login.module.css */
 .container {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #534f4f;
-}
-
-form {
+    background-color: #1a1a1a;
+    color: #f5f5f5;
+  }
+  
+  .loginBox {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    background: #2c2c2c;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .title {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    color: #fff;
+  }
+  
+  .form {
     display: flex;
     flex-direction: column;
-    width: 300px;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    background-color: #8a8585;
-}
-
-label {
-    margin-top: 10px;
-}
-
-input {
-    padding: 8px;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: black;
-    color: white;
-}
-
-button {
-    margin-top: 20px;
+  }
+  
+  .formGroup {
+    margin-bottom: 15px;
+  }
+  
+  .label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #ddd;
+  }
+  
+  .input {
+    width: 100%;
     padding: 10px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background: #333;
+    color: #f5f5f5;
+    outline: none;
+  }
+  
+  .input::placeholder {
+    color: #888;
+  }
+  
+  .button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #007bff;
     border: none;
     border-radius: 5px;
-    background-color: #007bff;
-    color: white;
+    color: #fff;
     cursor: pointer;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-.error {
-    color: red;
+    font-size: 1rem;
+  }
+  
+  .button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+  }
+  
+  .backButton {
+    background-color: #6c757d;
+  }
+  
+  .error {
     margin-top: 10px;
-}
+    color: #e74c3c;
+    font-weight: bold;
+    text-align: center;
+  }
+  
