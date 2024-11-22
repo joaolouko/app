@@ -27,6 +27,13 @@ function VerReservas() {
         fetchReservas();
     }, []);
 
+    const formatarDataBrasileira = (data) => {
+        const dataObj = new Date(data + 'T00:00:00');
+        return dataObj.toLocaleDateString('pt-BR', {
+          timeZone: 'America/Sao_Paulo',
+        });
+      };
+
     const handleCancelReservation = async (salaId, diaIndex, aulaIndex) => {
         try {
             // Envia a requisição PUT para o backend, cancelando a reserva
@@ -73,9 +80,8 @@ function VerReservas() {
 
     return (
         <>
-        <Header />
         <div className="container mt-5 bg-dark text-light p-4">
-            <h2>Cancelar Reservas</h2>
+            <h2>Minhas reservas</h2>
 
             {/* Exibe a mensagem de sucesso ou erro acima das reservas */}
             {message && (
@@ -85,31 +91,32 @@ function VerReservas() {
             )}
 
             {salas.length > 0 ? (
-                <ul className="list-group mt-3">
-                    {salas.map((sala) => (
-                        sala.dias.map((dia, diaIndex) => (
-                            dia.aulas.map((aula, aulaIndex) => (
-                                aula.occuped && aula.userId === userId && (
-                                    <li key={`${sala._id}-${diaIndex}-${aulaIndex}`} className="list-group-item bg-secondary text-light">
-                                        <p><strong>Sala:</strong> {sala.nome}</p>
-                                        <p><strong>Data:</strong> {dia.data || 'Data não especificada'}</p>
-                                        <p><strong>Aula:</strong> {aula.aula || 'Aula não especificada'}</p>
-                                        <button 
-                                            className="btn btn-danger"
-                                            onClick={() => handleCancelReservation(sala._id, diaIndex, aulaIndex)}
-                                        >
-                                            Cancelar Reserva
-                                        </button>
-                                    </li>
-                                )
+                <div className="reservas-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    <ul className="list-group mt-3">
+                        {salas.map((sala) => (
+                            sala.dias.map((dia, diaIndex) => (
+                                dia.aulas.map((aula, aulaIndex) => (
+                                    aula.occuped && aula.userId === userId && (
+                                        <li key={`${sala._id}-${diaIndex}-${aulaIndex}`} className="list-group-item bg-secondary text-light">
+                                            <p><strong>Sala:</strong> {sala.nome}</p>
+                                            <p><strong>Data:</strong> {formatarDataBrasileira(dia.data) || 'Data não especificada'}</p>
+                                            <p><strong>Aula:</strong> {aula.aula || 'Aula não especificada'}</p>
+                                            <button 
+                                                className="btn btn-danger"
+                                                onClick={() => handleCancelReservation(sala._id, diaIndex, aulaIndex)}
+                                            >
+                                                Cancelar Reserva
+                                            </button>
+                                        </li>
+                                    )
+                                ))
                             ))
-                        ))
-                    ))}
-                </ul>
+                        ))}
+                    </ul>
+                </div>
             ) : (
                 <p>Nenhuma reserva encontrada</p>
             )}
-            <button className="btn btn-secondary mt-4" onClick={() => navigate('/inicio')}>Voltar</button>
         </div>
         </>
     );

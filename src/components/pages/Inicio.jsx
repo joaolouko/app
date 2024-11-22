@@ -3,6 +3,7 @@ import Header from '../layout/Header';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import VerReservas from './VerReservas';
 
 function Inicio() {
   const [data, setData] = useState([]);
@@ -63,13 +64,10 @@ function Inicio() {
                 key={`${salaIndex}-${diaIndex}-${aulaIndex}`}
               >
                 <span>
-                  {sala.nome} - {aula.aula}
-                </span>
-                <span className="text-muted">
-                  Reservado por {aula.reservadoPor} em {formatarDataBrasileira(dia.data)}
+                  {sala.nome} - {aula.aula} - Reservado por {aula.reservadoPor} para {formatarDataBrasileira(dia.data)}
                 </span>
               </li>
-            )
+            ) 
         )
       )
     );
@@ -80,22 +78,10 @@ function Inicio() {
       <Header />
       <div className="container mt-4 bg-dark text-light p-4 rounded">
         <div className="row mb-4">
-          <div className="col-md-6">
-            <div className="d-grid gap-3">
-              <Link className="btn btn-primary" to="/reservar">
-                Reservar Sala
-              </Link>
-              <Link className="btn btn-secondary" to="/ver-reserva">
-                Ver Minhas Reservas
-              </Link>
-            </div>
-          </div>
-
-          {/* Exibir reservas */}
-          <div className="col-md-6">
+          <div className="col-12">
             <div className="card bg-dark text-light">
               <div className="card-body">
-                <h5 className="card-title">Salas Reservadas</h5>
+                <h5 className="card-title">Todas as reservas feitas</h5>
                 <ul className="list-group list-group-flush">{renderizarReservas()}</ul>
                 {error && <p className="text-danger mt-3">{error}</p>}
               </div>
@@ -103,13 +89,14 @@ function Inicio() {
           </div>
         </div>
 
-        {/* Exibir informações do usuário */}
+      
         <div className="row">
           <div className="col-12">
             <div className="card bg-dark text-light text-center">
-              <div className="card-body">
-                <h5 className="card-title">Usuário Atual: {nomeUsuario}</h5>
-                <h6 className="card-subtitle mb-2 text-muted">Foto de Perfil</h6>
+              <div className="d-grid gap-3">
+                <Link className="btn btn-primary" to="/reservar">
+                  Reservar Sala
+                </Link>
               </div>
             </div>
           </div>

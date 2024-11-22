@@ -9,6 +9,7 @@ const socket = io('http://localhost:3001');
 function Admin() {
     const navigate = useNavigate();
     const [salas, setSalas] = useState([]);
+    const [usuario, setUsuario ] = useState([]);
     const [newSalaName, setNewSalaName] = useState('');
     const [selectedReservas, setSelectedReservas] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +28,19 @@ function Admin() {
         }
     };
 
+    const fetchUsuarios = async () => {
+        try {
+            const response = await axios.get('http://localhost:3001/usuarios', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+            setUsuario(response.data);
+        } catch (error) {
+            console.error('Erro ao buscar usuarios:', error);
+        }
+    };
+
     // Effect to validate user role and fetch salas
     useEffect(() => {
         const role = localStorage.getItem('role');
@@ -35,6 +49,7 @@ function Admin() {
         }
 
         fetchSalas();
+        fetchUsuarios();
 
         socket.on('updateSalas', fetchSalas);
 
@@ -114,6 +129,7 @@ function Admin() {
         }
     };
 
+    
     // Logout function
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -125,6 +141,34 @@ function Admin() {
         setSelectedReservas((prev) => ({ ...prev, [salaId]: value }));
     };
 
+
+    const handleUpdatePassword = async (userId) => {
+        if (newPassword !== confirmPassword) {
+            setPasswordError('As senhas não coincidem!');
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            await axios.put(
+                `http://localhost:3001/usuarios/${userId}/senha`,
+                { senha: newPassword },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    },
+                }
+            );
+            setUserToEdit(null); // Close the edit form
+            setNewPassword('');
+            setConfirmPassword('');
+            fetchUsuarios();
+        } catch (error) {
+            console.error('Erro ao atualizar a senha:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
     return (
         <div className="container mt-5 bg-dark text-light p-4 rounded">
             <h1 className="mb-4 text-center">Administração de Salas</h1>
@@ -205,7 +249,30 @@ function Admin() {
                     </button>
                 </div>
             </form>
+            
+            <h3>Usuários</h3>
+            <ul className="list-group mb-4">
+                {usuario && usuario.length > 0 ? (
+                    usuario.map((usuario) => (
+                        <li
+                            key={usuario._id}
+                            className="list-group-item d-flex justify-content-between align-items-center bg-secondary text-light"
+                        >
+                            <span>{usuario.nome}</span>
+                            <button
+                                onClick={() => setUserToEdit(usuario._id)}
+                                className="btn btn-warning"
+                            >
+                                Editar Senha
+                            </button>
+                        </li>
+                    ))
+                ) : (
+                    <p className="text-center">Nenhum usuário disponível</p>
+                )}
+            </ul>
 
+            
             {/* Botão de logout */}
             <button
                 className="btn btn-secondary w-100"

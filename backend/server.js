@@ -101,6 +101,8 @@ app.get('/dados', authenticateToken, async (req, res) => {
     }
 });
 
+
+
 // Rota de login
 app.post('/login', async (req, res) => {
     try {
@@ -393,8 +395,49 @@ app.post('/admin/criar-sala', authenticateToken, async (req, res) => {
     }
 });
 
+app.get('/usuarios', authenticateToken, async (req, res) => {
+    try {
+        const database = client.db('teste');
+        const collection = database.collection('usuarios');
+        const dados = await collection.find({}).toArray();
+        res.json(dados);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao buscar dados' });
+    }
+});
 
+app.put('/usuarios/:id/senha', authenticateToken, async (req, res) => {
+    const userId = req.params.id; // ID do usuário a ser atualizado
+    const { senha } = req.body;   // Nova senha recebida no corpo da requisição
 
+    if (!senha || senha.trim() === '') {
+        return res.status(400).json({ message: 'Senha não pode ser vazia' });
+    }
+
+    try {
+        // Criptografar a nova senha
+        const hashedPassword = await bcrypt.hash(senha, 10);
+
+        const database = client.db('teste');
+        const collection = database.collection('usuarios');
+
+        // Atualizar a senha do usuário no banco de dados
+        const result = await collection.updateOne(
+            { _id: new ObjectId(userId) },  // Procurando pelo ID do usuário
+            { $set: { senha: hashedPassword } }  // Atualizando a senha
+        );
+
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ message: 'Usuário não encontrado' });
+        }
+
+        res.status(200).json({ message: 'Senha atualizada com sucesso' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao atualizar a senha' });
+    }
+});
 
 // DELETE para excluir uma sala
 app.delete('/admin/excluir-sala/:id', authenticateToken, async (req, res) => {

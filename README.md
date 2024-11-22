@@ -86,6 +86,10 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 - **Melhorias no Design:** Ajustes realizados para melhorar a interface do usuário, com foco na experiência e usabilidade.
 - **Melhorias na Segurança:** Foram implementadas medidas adicionais de segurança, como proteção contra ataques CSRF, melhorias na validação de entradas e refinamento da autenticação por JWT.
 
+### Dia 21/11 Beta 1.1.1
+- **Resolução de Bugs Visuais e de Datas:** Foram corrigidos diversos bugs visuais e problemas com a exibição das datas no sistema, garantindo uma melhor experiência ao usuário.
+- **Início do Desenvolvimento do Registro de Usuários:** Começou a implementação da funcionalidade de registro de usuários, permitindo a criação de contas no sistema.
+- **Melhorias na Organização Geral do Site:** Foram feitas melhorias na estrutura e organização do site, com foco na usabilidade e navegação.
 ---
 
 ## Como Rodar o Projeto

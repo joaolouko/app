@@ -3,17 +3,20 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../layout/Header';
 import { Calendar } from 'primereact/calendar';
-import {addLocale} from 'primereact/api'
-import 'primereact/resources/themes/bootstrap4-dark-blue/theme.css';  // Tema escuro para o calendário do PrimeReact
+import { addLocale } from 'primereact/api';
+import VerReservas from './VerReservas';
+import 'primereact/resources/themes/bootstrap4-dark-blue/theme.css'; 
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
-import 'bootstrap/dist/css/bootstrap.min.css';  // Importar o Bootstrap
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function ReservarSala() {
     const [data, setData] = useState([]);
     const [selectedAula, setSelectedAula] = useState('');
     const [selectedSala, setSelectedSala] = useState(null);
     const [date, setDate] = useState(new Date());
+    const [message, setMessage] = useState(''); // Estado para mensagem
+    const [shouldUpdate, setShouldUpdate] = useState(false); // Controle de atualização
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -37,71 +40,41 @@ function ReservarSala() {
             }
         };
         fetchData();
-    }, [navigate]);
+    }, [navigate, shouldUpdate]);
 
     const handleReservarSala = async () => {
         if (!selectedAula || !selectedSala) {
-            alert('Por favor, selecione uma aula e uma sala antes de reservar.');
+            setMessage('Por favor, selecione uma aula e uma sala.');
+            setTimeout(() => setMessage(''), 1000); // Limpa a mensagem após 1 segundo
             return;
         }
-    
+
         const aulaIndex = parseInt(selectedAula.split(' ')[1]) - 1;
-        const formattedDate = date.toISOString().split('T')[0]; // ISO format
+        const formattedDate = date.toISOString().split('T')[0];
         const token = localStorage.getItem('token');
-    
+
         try {
-            const sala = data.find(sala => sala._id === selectedSala._id);
-            const diaExistente = sala.dias.find(dia => dia.data === formattedDate);
-    
-            if (diaExistente) {
-                // Atualiza apenas se a aula não estiver ocupada
-                if (!diaExistente.aulas[aulaIndex].occuped) {
-                    diaExistente.aulas[aulaIndex] = {
-                        ...diaExistente.aulas[aulaIndex], 
-                        occuped: true,
-                        userId: localStorage.getItem('userId')
-                    };
-                } else {
-                    alert('Essa aula já está ocupada.');
-                    return;
-                }
-            } else {
-                // Adiciona novo dia apenas se a data for válida
-                sala.dias.push({
-                    data: formattedDate,  // Garante que a data não será vazia
-                    aulas: [...Array(10).keys()].map((_, index) => ({
-                        aula: `Aula ${index + 1}`,
-                        occuped: index === aulaIndex,
-                        userId: index === aulaIndex ? localStorage.getItem('userId') : null,
-                    })),
-                });
-            }
-    
-            // Atualiza o banco de dados
-            await axios.put(`http://localhost:3001/reservar-sala/${selectedSala._id}`, {
-                aulaIndex,
-                date: formattedDate
-            }, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-    
-            alert('Sala reservada com sucesso!');
-    
-            // Atualiza o estado local
-            setData(data.map(sala =>
-                sala._id === selectedSala._id ? {
-                    ...sala,
-                    dias: sala.dias
-                } : sala
-            ));
-    
+            await axios.put(
+                `http://localhost:3001/reservar-sala/${selectedSala._id}`,
+                { aulaIndex, date: formattedDate },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setMessage('Sala reservada com sucesso!');
+            setTimeout(() => setMessage(''), 1500); // Limpa a mensagem após 1 segundo
+
             setSelectedAula('');
             setSelectedSala(null);
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } catch (error) {
             console.error('Erro ao reservar sala:', error);
+            setMessage('Erro ao reservar a sala.');
+            setTimeout(() => setMessage(''), 1000); // Limpa a mensagem após 1 segundo
         }
     };
-    
 
     const handleDateChange = (newDate) => {
         setDate(newDate);
@@ -120,56 +93,50 @@ function ReservarSala() {
         clear: "Limpar",
         dateFormat: 'dd/mm/yy',
         weekHeader: 'Sm',
-        chooseDate: 'Escolha uma data'  // chave necessária conforme o erro
     });
-    const ptBR = {
-        firstDayOfWeek: 1,
-        dayNames: ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"],
-        dayNamesShort: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"],
-        dayNamesMin: ["D", "S", "T", "Q", "Q", "S", "S"],
-        monthNames: ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"],
-        monthNamesShort: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"],
-        today: "Hoje",
-        clear: "Limpar",
-        dateFormat: 'dd/mm/yy',
-        weekHeader: 'Sm',
-        chooseDate: 'Escolha uma data' // chave necessária conforme o erro
-    };
-
-
 
     return (
         <>
             <Header />
-            <div className="container mt-4">
+            <div className="container mt-5">
                 <div className="row">
+                    <div className="col-md-6 mb-4">
+                        <div className="card bg-dark text-light shadow p-4">
+                            <VerReservas shouldUpdate={shouldUpdate} />
+                        </div>
+                    </div>
                     <div className="col-md-6">
-                        <div className="card bg-dark text-light p-3 mb-4 shadow">
-                            <h2 className="text-center">Selecione a data</h2>
+                        <div className="card bg-dark text-light shadow p-4 mb-4">
+                            <h3 className="text-center">Selecione a Data</h3>
                             <Calendar
                                 value={date}
                                 onChange={(e) => handleDateChange(e.value)}
-                                locale='pt-BR'
-                                dateFormat='dd/mm/yy'
+                                locale="pt-BR"
+                                dateFormat="dd/mm/yy"
                                 showIcon
-                                className="w-100 bg-dark text-light"  // Tema escuro no calendário
-
+                                minDate={new Date()}
+                                className="w-100 mt-3"
                             />
                         </div>
-                    </div>
+                        <div className="card bg-dark text-light shadow p-4">
+                            <h3 className="text-center">Salas Disponíveis</h3>
 
-                    <div className="col-md-6">
-                        <div className="card bg-dark text-light p-3 mb-4 shadow">
-                            <h1 className="text-center">Salas disponíveis</h1>
-                            <div className="mb-3">
-                                <label htmlFor="aula-select" className="form-label">Selecione a aula:</label>
+                            {/* Exibe mensagem */}
+                            {message && (
+                                <div className="alert alert-info text-center" role="alert">
+                                    {message}
+                                </div>
+                            )}
+
+                            <div className="form-group mb-3">
+                                <label htmlFor="aula-select">Selecione a Aula:</label>
                                 <select
                                     id="aula-select"
                                     className="form-select bg-dark text-light"
                                     value={selectedAula}
                                     onChange={(e) => setSelectedAula(e.target.value)}
                                 >
-                                    <option value="">--Selecione uma aula--</option>
+                                    <option value="">-- Selecione uma Aula --</option>
                                     {[...Array(10).keys()].map((aula) => (
                                         <option key={aula + 1} value={`Aula ${aula + 1}`}>
                                             Aula {aula + 1}
@@ -177,58 +144,46 @@ function ReservarSala() {
                                     ))}
                                 </select>
                             </div>
-
-                            <ul className="list-group bg-dark text-light">
+                            <ul className="list-group">
                                 {data.map((item) => {
-                                    const formattedDate = date.toLocaleDateString('en-CA'); 
+                                    const formattedDate = date.toISOString().split('T')[0];
                                     const dia = item.dias.find(dia => dia.data === formattedDate);
                                     const aulaIndex = parseInt(selectedAula.split(' ')[1]) - 1;
 
                                     return (
                                         <li
                                             key={item._id}
-                                            onClick={() => !dia?.aulas[aulaIndex]?.occuped && setSelectedSala(item)} // Permite clique apenas em salas disponíveis
-                                            className={`list-group-item bg-dark text-light ${selectedSala?._id === item._id ? 'active' : ''}`}
+                                            onClick={() =>
+                                                !dia?.aulas[aulaIndex]?.occuped && setSelectedSala(item)
+                                            }
+                                            className={`list-group-item bg-dark text-light ${
+                                                selectedSala?._id === item._id ? 'active' : ''
+                                            }`}
                                             style={{
-                                                cursor: dia?.aulas[aulaIndex]?.occuped ? 'not-allowed' : 'pointer',  // Desabilita o clique nas salas ocupadas
-                                                opacity: dia?.aulas[aulaIndex]?.occuped ? 0.5 : 1  // Aplica opacidade nos itens ocupados
+                                                cursor: dia?.aulas[aulaIndex]?.occuped
+                                                    ? 'not-allowed'
+                                                    : 'pointer',
+                                                opacity: dia?.aulas[aulaIndex]?.occuped ? 0.5 : 1,
                                             }}
                                         >
-                                            <div>{item.nome}</div>
-                                            {dia && selectedAula && (
-                                                <ul className="list-group bg-dark text-light">
-                                                    {dia.aulas[aulaIndex] && (
-                                                        <li
-                                                            className="list-group-item bg-dark text-light"
-                                                            style={{
-                                                                textDecoration: dia.aulas[aulaIndex].occuped ? 'line-through' : 'none', // Opcional: tachar as aulas ocupadas
-                                                                opacity: dia.aulas[aulaIndex].occuped ? 0.5 : 1, // Opacidade menor para aulas ocupadas
-                                                                cursor: dia.aulas[aulaIndex].occuped ? 'not-allowed' : 'pointer' // Cursor desativado nas aulas ocupadas
-                                                            }}
-                                                        >
-                                                            {dia.aulas[aulaIndex].aula}
-                                                        </li>
-                                                    )}
-                                                </ul>
-                                            )}
+                                            {item.nome}
                                         </li>
                                     );
                                 })}
                             </ul>
-
-
-
                             <button
                                 onClick={handleReservarSala}
                                 disabled={!selectedAula || !selectedSala}
-                                className="btn btn-primary mt-3 w-100"
+                                className="btn btn-primary w-100 mt-3 shadow"
                             >
                                 Reservar Sala
                             </button>
                         </div>
                     </div>
                 </div>
-                <Link to='/inicio' className="btn btn-secondary mt-4">Voltar</Link>
+                <Link to="/inicio" className="btn btn-secondary mt-4 shadow">
+                    Voltar
+                </Link>
             </div>
         </>
     );
