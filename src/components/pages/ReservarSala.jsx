@@ -9,6 +9,7 @@ import 'primereact/resources/themes/bootstrap4-dark-blue/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import io from 'socket.io-client';
 
 function ReservarSala() {
     const [data, setData] = useState([]);
@@ -19,12 +20,14 @@ function ReservarSala() {
     const [shouldUpdate, setShouldUpdate] = useState(false); // Controle de atualização
     const navigate = useNavigate();
 
+    
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) {
             navigate('/');
             return;
         }
+
 
         const fetchData = async () => {
             try {
@@ -40,6 +43,17 @@ function ReservarSala() {
             }
         };
         fetchData();
+
+        const socket = io('http://localhost:3001'); // Substitua pela URL do servidor
+        socket.on('atualizarReservas', () => {
+            console.log('Atualização recebida via Socket.IO');
+            fetchData(); // Recarrega os dados automaticamente
+        });
+        
+        // Cleanup do socket ao desmontar o componente
+        return () => {
+            socket.disconnect();
+        };
     }, [navigate, shouldUpdate]);
 
     const handleReservarSala = async () => {
@@ -144,29 +158,31 @@ function ReservarSala() {
                                     ))}
                                 </select>
                             </div>
-                            <ul className="list-group">
+                            <ul className="list-group"  style={{ maxHeight: '215px', overflowY: 'auto' }}>
                                 {data.map((item) => {
                                     const formattedDate = date.toISOString().split('T')[0];
                                     const dia = item.dias.find(dia => dia.data === formattedDate);
                                     const aulaIndex = parseInt(selectedAula.split(' ')[1]) - 1;
 
+                                    const isReservado = dia?.aulas[aulaIndex]?.occuped;
+
                                     return (
                                         <li
                                             key={item._id}
                                             onClick={() =>
-                                                !dia?.aulas[aulaIndex]?.occuped && setSelectedSala(item)
+                                                !isReservado && setSelectedSala(item)
                                             }
                                             className={`list-group-item bg-dark text-light ${
                                                 selectedSala?._id === item._id ? 'active' : ''
                                             }`}
                                             style={{
-                                                cursor: dia?.aulas[aulaIndex]?.occuped
+                                                cursor: isReservado
                                                     ? 'not-allowed'
                                                     : 'pointer',
-                                                opacity: dia?.aulas[aulaIndex]?.occuped ? 0.5 : 1,
+                                                opacity: isReservado ? 0.5 : 1,
                                             }}
                                         >
-                                            {item.nome}
+                                            {item.nome} {isReservado && '(reservado)'}
                                         </li>
                                     );
                                 })}
