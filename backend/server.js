@@ -156,12 +156,12 @@ app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
         const database = client.db('teste');
         const collection = database.collection('salas');
 
-        // Primeiro, tentamos atualizar uma aula existente na data
+        // Tenta encontrar o dia específico para a sala
         const query = {
             _id: new ObjectId(id),
-            "dias.data": date,
-            [`dias.$.aulas.${aulaIndex}.occuped`]: false
+            "dias.data": date
         };
+
         const update = {
             $set: {
                 [`dias.$.aulas.${aulaIndex}.occuped`]: true,
@@ -170,9 +170,10 @@ app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
             }
         };
 
+        // Tenta atualizar o dia específico com a reserva
         const result = await collection.updateOne(query, update);
 
-        // Se a data não existir, criamos um novo dia com a reserva
+        // Se o dia não existir, cria um novo dia com as aulas
         if (result.matchedCount === 0) {
             const newDay = {
                 data: date,
@@ -187,6 +188,7 @@ app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
             const addDayQuery = { _id: new ObjectId(id) };
             const addDayUpdate = { $push: { dias: newDay } };
 
+            // Adiciona o novo dia
             const addDayResult = await collection.updateOne(addDayQuery, addDayUpdate);
 
             if (addDayResult.matchedCount === 0) {
@@ -194,7 +196,7 @@ app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
             }
         }
 
-        notifySalaChange();
+        notifySalaChange(); // Notifica outros serviços, se necessário
         res.json({ message: 'Aula reservada com sucesso!' });
     } catch (error) {
         console.error(error);

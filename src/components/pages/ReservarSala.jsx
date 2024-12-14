@@ -5,7 +5,7 @@ import Header from '../layout/Header';
 import { Calendar } from 'primereact/calendar';
 import { addLocale } from 'primereact/api';
 import VerReservas from './VerReservas';
-import 'primereact/resources/themes/bootstrap4-dark-blue/theme.css'; 
+import 'primereact/resources/themes/bootstrap4-dark-blue/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,8 +15,9 @@ function ReservarSala() {
     const [selectedAula, setSelectedAula] = useState('');
     const [selectedSala, setSelectedSala] = useState(null);
     const [date, setDate] = useState(new Date());
-    const [message, setMessage] = useState(''); // Estado para mensagem
-    const [shouldUpdate, setShouldUpdate] = useState(false); // Controle de atualização
+    const [message, setMessage] = useState('');
+    const [shouldUpdate, setShouldUpdate] = useState(false);
+    const [userId, setUserId] = useState(null); // ID do usuário
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -25,6 +26,10 @@ function ReservarSala() {
             navigate('/');
             return;
         }
+
+        // Recuperar o ID do usuário
+        const user = JSON.parse(localStorage.getItem('user'));
+        setUserId(user?.id || null);
 
         const fetchData = async () => {
             try {
@@ -45,7 +50,7 @@ function ReservarSala() {
     const handleReservarSala = async () => {
         if (!selectedAula || !selectedSala) {
             setMessage('Por favor, selecione uma aula e uma sala.');
-            setTimeout(() => setMessage(''), 1000); // Limpa a mensagem após 1 segundo
+            setTimeout(() => setMessage(''), 1000);
             return;
         }
 
@@ -56,23 +61,23 @@ function ReservarSala() {
         try {
             await axios.put(
                 `http://localhost:3001/reservar-sala/${selectedSala._id}`,
-                { aulaIndex, date: formattedDate },
+                { aulaIndex, date: formattedDate, userId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             setMessage('Sala reservada com sucesso!');
-            setTimeout(() => setMessage(''), 1500); // Limpa a mensagem após 1 segundo
+            setTimeout(() => setMessage(''), 1500);
 
             setSelectedAula('');
             setSelectedSala(null);
-
+            setShouldUpdate(!shouldUpdate); // Atualiza os dados
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
         } catch (error) {
             console.error('Erro ao reservar sala:', error);
             setMessage('Erro ao reservar a sala.');
-            setTimeout(() => setMessage(''), 1000); // Limpa a mensagem após 1 segundo
+            setTimeout(() => setMessage(''), 1000);
         }
     };
 
@@ -120,14 +125,11 @@ function ReservarSala() {
                         </div>
                         <div className="card bg-dark text-light shadow p-4">
                             <h3 className="text-center">Salas Disponíveis</h3>
-
-                            {/* Exibe mensagem */}
                             {message && (
                                 <div className="alert alert-info text-center" role="alert">
                                     {message}
                                 </div>
                             )}
-
                             <div className="form-group mb-3">
                                 <label htmlFor="aula-select">Selecione a Aula:</label>
                                 <select
@@ -150,20 +152,18 @@ function ReservarSala() {
                                     const dia = item.dias.find(dia => dia.data === formattedDate);
                                     const aulaIndex = parseInt(selectedAula.split(' ')[1]) - 1;
 
+                                    // Verifica se a aula está ocupada
+                                    const isOccupied = dia?.aulas[aulaIndex]?.occuped;
+
                                     return (
                                         <li
                                             key={item._id}
-                                            onClick={() =>
-                                                !dia?.aulas[aulaIndex]?.occuped && setSelectedSala(item)
-                                            }
-                                            className={`list-group-item bg-dark text-light ${
-                                                selectedSala?._id === item._id ? 'active' : ''
-                                            }`}
+                                            onClick={() => !isOccupied && setSelectedSala(item)}
+                                            className={`list-group-item bg-dark text-light ${selectedSala?._id === item._id ? 'active' : ''
+                                                }`}
                                             style={{
-                                                cursor: dia?.aulas[aulaIndex]?.occuped
-                                                    ? 'not-allowed'
-                                                    : 'pointer',
-                                                opacity: dia?.aulas[aulaIndex]?.occuped ? 0.5 : 1,
+                                                cursor: isOccupied ? 'not-allowed' : 'pointer',
+                                                opacity: isOccupied ? 0.5 : 1,
                                             }}
                                         >
                                             {item.nome}
@@ -171,6 +171,7 @@ function ReservarSala() {
                                     );
                                 })}
                             </ul>
+
                             <button
                                 onClick={handleReservarSala}
                                 disabled={!selectedAula || !selectedSala}

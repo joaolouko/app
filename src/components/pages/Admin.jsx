@@ -91,12 +91,27 @@ function Admin() {
     const handleCreateSala = async (e) => {
         e.preventDefault();
         if (newSalaName.trim() === '') return;
-
+    
         try {
             setIsLoading(true);
+    
+            // Criando a estrutura inicial de dias e aulas
+            const dias = Array(7) // Supondo uma semana como exemplo
+                .fill(null)
+                .map(() => ({
+                    data: '', // Adicione a lógica de preenchimento de data, se necessário
+                    aulas: Array(6) // Supondo 6 aulas por dia
+                        .fill(null)
+                        .map(() => ({
+                            aula: '', // Preencha o nome/identificador da aula se necessário
+                            occuped: false, // Inicialmente não ocupada
+                            reservadoPor: '', // Inicialmente sem usuário
+                        })),
+                }));
+    
             await axios.post(
                 'http://localhost:3001/admin/criar-sala',
-                { nome: newSalaName, dias: [{ data: '', aulas: [] }] },
+                { nome: newSalaName, dias },
                 {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`,
