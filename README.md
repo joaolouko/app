@@ -94,8 +94,11 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 ### Dia 10/12 Beta 1.1.2
 - **Pequenos ajustes na estilização:** Ajustes na estilização do projeto.
 
-### Dia 14/12 Beta 1.1.2
+### Dia 14/12 Beta 1.1.3
 - **Correção de Bugs de Múltiplas Reservas no Mesmo Dia:** Corrigidos os erros relacionados à criação de múltiplas reservas no mesmo dia, garantindo que as reservas não sejam duplicadas no banco de dados.
+
+### Dia 14/12 Beta 1.1.4
+- **Coreção de conflitos:** Conflitos de merge foram resolvidos
 
 ---
 
