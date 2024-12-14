@@ -189,7 +189,7 @@ function Admin() {
             <h1 className="mb-4 text-center">Administração de Salas</h1>
 
             {/* Lista de salas */}
-            <ul className="list-group mb-4">
+            <ul className="list-group mb-4" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                 {salas && salas.length > 0 ? (
                     salas.map((sala, salaIndex) => (
                         <li
@@ -265,6 +265,11 @@ function Admin() {
                 </div>
             </form>
             
+            {/*
+            
+            COMENTÁRIO JSX 
+            
+            
             <h3>Usuários</h3>
             <ul className="list-group mb-4">
                 {usuario && usuario.length > 0 ? (
@@ -287,10 +292,10 @@ function Admin() {
                 )}
             </ul>
 
-            
+            */}
             {/* Botão de logout */}
             <button
-                className="btn btn-secondary w-100"
+                className="btn btn-danger w-100"
                 onClick={handleLogout}
                 disabled={isLoading}
             >

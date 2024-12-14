@@ -91,6 +91,9 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 - **Início do Desenvolvimento do Registro de Usuários:** Começou a implementação da funcionalidade de registro de usuários, permitindo a criação de contas no sistema.
 - **Melhorias na Organização Geral do Site:** Foram feitas melhorias na estrutura e organização do site, com foco na usabilidade e navegação.
 
+### Dia 10/12 Beta 1.1.2
+- **Pequenos ajustes na estilização:** Ajustes na estilização do projeto.
+
 ### Dia 14/12 Beta 1.1.2
 - **Correção de Bugs de Múltiplas Reservas no Mesmo Dia:** Corrigidos os erros relacionados à criação de múltiplas reservas no mesmo dia, garantindo que as reservas não sejam duplicadas no banco de dados.
 
