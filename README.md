@@ -98,10 +98,12 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 - **Correção de Bugs de Múltiplas Reservas no Mesmo Dia:** Corrigidos os erros relacionados à criação de múltiplas reservas no mesmo dia, garantindo que as reservas não sejam duplicadas no banco de dados.
 
 ### Dia 14/12 Beta 1.1.4
-- **Coreção de conflitos:** Conflitos de merge foram resolvidos
+- **Correção de Conflitos:** Conflitos de merge foram resolvidos.
 
----
+### Dia 16/12 Beta 1.1.5
+- **Função de Criação, Exclusão e Edição de Senhas:** Implementada a funcionalidade para criação, exclusão e edição de senhas no sistema, permitindo um controle mais eficiente sobre as credenciais de usuários.
 
+--- 
 
 ## Como Rodar o Projeto
 

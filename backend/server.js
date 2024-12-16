@@ -409,25 +409,49 @@ app.get('/usuarios', authenticateToken, async (req, res) => {
     }
 });
 
+// Rota: Criar novo usuário
+app.post('/usuarios', authenticateToken, async (req, res) => {
+    const { nome, senha } = req.body;
+
+    if (!nome || !senha || senha.trim() === '') {
+        return res.status(400).json({ message: 'Nome e senha são obrigatórios' });
+    }
+
+    try {
+        const hashedPassword = await bcrypt.hash(senha, 10);
+
+        const database = client.db('teste');
+        const collection = database.collection('usuarios');
+
+        const newUser = { nome, senha: hashedPassword };
+
+        await collection.insertOne(newUser);
+
+        res.status(201).json({ message: 'Usuário criado com sucesso' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao criar usuário' });
+    }
+});
+
+// Rota: Atualizar senha do usuário
 app.put('/usuarios/:id/senha', authenticateToken, async (req, res) => {
-    const userId = req.params.id; // ID do usuário a ser atualizado
-    const { senha } = req.body;   // Nova senha recebida no corpo da requisição
+    const userId = req.params.id;
+    const { senha } = req.body;
 
     if (!senha || senha.trim() === '') {
         return res.status(400).json({ message: 'Senha não pode ser vazia' });
     }
 
     try {
-        // Criptografar a nova senha
         const hashedPassword = await bcrypt.hash(senha, 10);
 
         const database = client.db('teste');
         const collection = database.collection('usuarios');
 
-        // Atualizar a senha do usuário no banco de dados
         const result = await collection.updateOne(
-            { _id: new ObjectId(userId) },  // Procurando pelo ID do usuário
-            { $set: { senha: hashedPassword } }  // Atualizando a senha
+            { _id: new ObjectId(userId) },
+            { $set: { senha: hashedPassword } }
         );
 
         if (result.modifiedCount === 0) {
@@ -438,6 +462,27 @@ app.put('/usuarios/:id/senha', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erro ao atualizar a senha' });
+    }
+});
+
+// Rota: Excluir usuário
+app.delete('/usuarios/:id', authenticateToken, async (req, res) => {
+    const userId = req.params.id;
+
+    try {
+        const database = client.db('teste');
+        const collection = database.collection('usuarios');
+
+        const result = await collection.deleteOne({ _id: new ObjectId(userId) });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: 'Usuário não encontrado' });
+        }
+
+        res.status(200).json({ message: 'Usuário excluído com sucesso' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao excluir usuário' });
     }
 });
 

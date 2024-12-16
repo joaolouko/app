@@ -10,9 +10,18 @@ function Admin() {
     const navigate = useNavigate();
     const [salas, setSalas] = useState([]);
     const [usuario, setUsuario ] = useState([]);
+
     const [newSalaName, setNewSalaName] = useState('');
     const [selectedReservas, setSelectedReservas] = useState({});
     const [isLoading, setIsLoading] = useState(false);
+
+    const [newUserName, setNewUserName] = useState('');
+    const [newUserPassword, setNewUserPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    const [userToEdit, setUserToEdit] = useState(null);
+    const [newPassword, setNewPassword] = useState('');
+    const [passwordError, setPasswordError] = useState('');
 
     // Fetch initial data
     const fetchSalas = async () => {
@@ -57,6 +66,69 @@ function Admin() {
             socket.off('updateSalas');
         };
     }, [navigate]);
+
+     // Criar usuário
+     const handleCreateUser = async () => {
+        if (newUserPassword !== confirmPassword) {
+            setPasswordError('As senhas não coincidem!');
+            return;
+        }
+        try {
+            await axios.post(
+                'http://localhost:3001/usuarios',
+                { nome: newUserName, senha: newUserPassword },
+                { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }
+            );
+            setNewUserName('');
+            setNewUserPassword('');
+            setConfirmPassword('');
+            setPasswordError('');
+            fetchUsuarios();
+            alert('Usuário criado com sucesso!');
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao criar usuário');
+        }
+    };
+
+    // Editar senha do usuário
+    const handleEditSenha = async () => {
+        if (newPassword.trim() === '') {
+            setPasswordError('A senha não pode estar vazia!');
+            return;
+        }
+        try {
+            await axios.put(
+                `http://localhost:3001/usuarios/${userToEdit}/senha`,
+                { senha: newPassword },
+                { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }
+            );
+            setUserToEdit(null);
+            setNewPassword('');
+            setPasswordError('');
+            fetchUsuarios();
+            alert('Senha atualizada com sucesso!');
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao atualizar senha');
+        }
+    };
+
+    // Deletar usuário
+    const handleDeleteUser = async (id) => {
+        if (!window.confirm('Tem certeza que deseja excluir este usuário?')) return;
+        try {
+            await axios.delete(`http://localhost:3001/usuarios/${id}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            });
+            fetchUsuarios();
+            alert('Usuário excluído com sucesso!');
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao excluir usuário');
+        }
+    };
+
 
     // Handle removing a reservation
     const handleEditSala = async (salaId) => {
@@ -264,27 +336,32 @@ function Admin() {
                     </button>
                 </div>
             </form>
-            
-            {/*
-            
-            COMENTÁRIO JSX 
-            
-            
-            <h3>Usuários</h3>
-            <ul className="list-group mb-4">
+                 
+            <h3 className="mb-4">Usuários</h3>
+
+            {/* Lista de Usuários */}
+            <ul className="list-group mb-4" style={{ maxHeight: '250px', overflowY: 'auto' }}>
                 {usuario && usuario.length > 0 ? (
-                    usuario.map((usuario) => (
+                    usuario.map((u) => (
                         <li
-                            key={usuario._id}
+                            key={u._id}
                             className="list-group-item d-flex justify-content-between align-items-center bg-secondary text-light"
                         >
-                            <span>{usuario.nome}</span>
-                            <button
-                                onClick={() => setUserToEdit(usuario._id)}
-                                className="btn btn-warning"
-                            >
-                                Editar Senha
-                            </button>
+                            <span>{u.nome}</span>
+                            <div>
+                                <button
+                                    onClick={() => setUserToEdit(u._id)}
+                                    className="btn btn-warning btn-sm me-2"
+                                >
+                                    Editar Senha
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteUser(u._id)}
+                                    className="btn btn-danger btn-sm"
+                                >
+                                    Excluir
+                                </button>
+                            </div>
                         </li>
                     ))
                 ) : (
@@ -292,7 +369,58 @@ function Admin() {
                 )}
             </ul>
 
-            */}
+            {/* Formulário para Criar Usuário */}
+            <h5>Criar Novo Usuário</h5>
+            <div className="mb-4">
+                <input
+                    type="text"
+                    placeholder="Nome do Usuário"
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                    className="form-control mb-2"
+                />
+                <input
+                    type="password"
+                    placeholder="Senha"
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                    className="form-control mb-2"
+                />
+                <input
+                    type="password"
+                    placeholder="Confirmar Senha"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="form-control mb-2"
+                />
+                {passwordError && <p className="text-danger">{passwordError}</p>}
+                <button onClick={handleCreateUser} className="btn btn-primary w-100">
+                    Criar Usuário
+                </button>
+            </div>
+
+            {/* Edição de Senha */}
+            {userToEdit && (
+                <div className="mb-4">
+                    <h5>Editar Senha</h5>
+                    <input
+                        type="password"
+                        placeholder="Nova Senha"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="form-control mb-2"
+                    />
+                    {passwordError && <p className="text-danger">{passwordError}</p>}
+                    <button onClick={handleEditSenha} className="btn btn-success me-2">
+                        Atualizar Senha
+                    </button>
+                    <button onClick={() => setUserToEdit(null)} className="btn btn-secondary">
+                        Cancelar
+                    </button>
+                </div>
+            )}
+
+            
             {/* Botão de logout */}
             <button
                 className="btn btn-danger w-100"
