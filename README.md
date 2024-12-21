@@ -27,7 +27,6 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 - **express:** Framework para construir a API do servidor.
 - **jsonwebtoken:** Para gerenciamento de tokens JWT.
 - **mongodb:** Driver do MongoDB para conexão e manipulação de dados.
-- **mysql:** Biblioteca para interação com bancos de dados MySQL.
 - **react, react-dom, react-router-dom, react-calendar:** Bibliotecas para construção de interfaces e gerenciamento de rotas.
 
 ### DevDependencies
