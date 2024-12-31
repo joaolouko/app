@@ -31,11 +31,15 @@ function Admin() {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
             });
-            setSalas(response.data);
+    
+            // Filtra apenas as salas que não estão marcadas como excluídas
+            const activeSalas = response.data.filter(sala => !sala.isDeleted);
+            setSalas(activeSalas);
         } catch (error) {
             console.error('Erro ao buscar salas:', error);
         }
     };
+    
 
     const fetchUsuarios = async () => {
         try {
@@ -117,17 +121,23 @@ function Admin() {
     // Deletar usuário
     const handleDeleteUser = async (id) => {
         if (!window.confirm('Tem certeza que deseja excluir este usuário?')) return;
+    
         try {
-            await axios.delete(`http://localhost:3001/usuarios/${id}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-            });
+            const response = await axios.put(
+                `http://localhost:3001/usuarios/${id}`,
+                {},
+                {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }
+            );
             fetchUsuarios();
-            alert('Usuário excluído com sucesso!');
+            alert(response.data.message);
         } catch (error) {
-            console.error(error);
+            console.error('Erro ao excluir usuário:', error);
             alert('Erro ao excluir usuário');
         }
     };
+    
 
 
     // Handle removing a reservation
@@ -167,18 +177,12 @@ function Admin() {
         try {
             setIsLoading(true);
     
-            // Criando a estrutura inicial de dias e aulas
+            // Gerando horários para cada dia da semana
             const dias = Array(7) // Supondo uma semana como exemplo
                 .fill(null)
                 .map(() => ({
                     data: '', // Adicione a lógica de preenchimento de data, se necessário
-                    aulas: Array(6) // Supondo 6 aulas por dia
-                        .fill(null)
-                        .map(() => ({
-                            aula: '', // Preencha o nome/identificador da aula se necessário
-                            occuped: false, // Inicialmente não ocupada
-                            reservadoPor: '', // Inicialmente sem usuário
-                        })),
+                    aulas: generateAulas(), // Gerando os horários para 6 aulas por dia
                 }));
     
             await axios.post(
@@ -198,23 +202,47 @@ function Admin() {
             setIsLoading(false);
         }
     };
+    
+    // Função para gerar os horários de aulas de 30 em 30 minutos (ajuste conforme necessário)
+    const generateAulas = () => {
+        const aulas = [];
+        let startHour = 8; // Início às 08:00
+        let endHour = 22;  // Fim às 22:00
+    
+        for (let hour = startHour; hour < endHour; hour++) {
+            for (let minute = 0; minute < 60; minute += 30) {
+                const hora = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                aulas.push({
+                    occuped: false, // Inicialmente não ocupada
+                    reservadoPor: '', // Inicialmente sem usuário
+                    horario: hora, // Armazenando o horário
+                });
+            }
+        }
+    
+        return aulas; // Retorna o array com os horários gerados
+    };
+    
 
     // Handle deleting a sala
     const handleDeleteSala = async (id) => {
         try {
-            setIsLoading(true);
-            await axios.delete(`http://localhost:3001/admin/excluir-sala/${id}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                },
-            });
-            fetchSalas();
+            const response = await axios.put(
+                `http://localhost:3001/admin/excluir-sala/${id}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                }
+            );
+            console.log(response.data.message);
         } catch (error) {
             console.error('Erro ao excluir sala:', error);
-        } finally {
-            setIsLoading(false);
         }
     };
+    
+    
 
     
     // Logout function
@@ -342,7 +370,9 @@ function Admin() {
             {/* Lista de Usuários */}
             <ul className="list-group mb-4" style={{ maxHeight: '250px', overflowY: 'auto' }}>
                 {usuario && usuario.length > 0 ? (
-                    usuario.map((u) => (
+                    usuario
+                    .filter((u) => u.nome !== "Admin")
+                    .map((u) => (
                         <li
                             key={u._id}
                             className="list-group-item d-flex justify-content-between align-items-center bg-secondary text-light"

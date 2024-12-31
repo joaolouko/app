@@ -12,68 +12,103 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 function ReservarSala() {
     const [data, setData] = useState([]);
-    const [selectedAula, setSelectedAula] = useState('');
+    const [selectedTime, setSelectedTime] = useState('');
     const [selectedSala, setSelectedSala] = useState(null);
     const [date, setDate] = useState(new Date());
     const [message, setMessage] = useState('');
     const [shouldUpdate, setShouldUpdate] = useState(false);
     const [userId, setUserId] = useState(null); // ID do usuário
+    const [cache, setCache] = useState({}); // Cache para horários
     const navigate = useNavigate();
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        if (!token) {
+        if (!token || token === null) {
             navigate('/');
             return;
         }
 
-        // Recuperar o ID do usuário
         const user = JSON.parse(localStorage.getItem('user'));
         setUserId(user?.id || null);
 
-        const fetchData = async () => {
+        // Fetch inicial para carregar as salas disponíveis
+        const fetchSalas = async () => {
             try {
                 const response = await axios.get('http://localhost:3001/dados', {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                setData(response.data);
+                setData(response.data); // Atualiza o estado com as salas
             } catch (error) {
-                console.error('Erro ao buscar dados:', error);
+                console.error('Erro ao buscar salas:', error);
                 if (error.response && error.response.status === 401) {
                     navigate('/login');
                 }
             }
         };
-        fetchData();
-    }, [navigate, shouldUpdate]);
+
+        fetchSalas();
+    }, [navigate]);
+
+    const fetchHorarios = async (salaId, formattedDate) => {
+        const cacheKey = `${salaId}_${formattedDate}`;
+        const token = localStorage.getItem('token');
+
+        // Verifica se já existem dados no cache
+        if (cache[cacheKey]) {
+            setSelectedSala((prevSala) => ({
+                ...prevSala,
+                horariosDisponiveis: cache[cacheKey],
+            }));
+            return;
+        }
+
+        try {
+            const response = await axios.get(
+                `http://localhost:3001/reservas/${salaId}/${formattedDate}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const horariosDisponiveis = response.data;
+
+            // Atualiza o cache e os horários
+            setCache((prevCache) => ({
+                ...prevCache,
+                [cacheKey]: horariosDisponiveis,
+            }));
+            setSelectedSala((prevSala) => ({
+                ...prevSala,
+                horariosDisponiveis,
+            }));
+        } catch (error) {
+            console.error('Erro ao buscar horários:', error);
+        }
+    };
 
     const handleReservarSala = async () => {
-        if (!selectedAula || !selectedSala) {
-            setMessage('Por favor, selecione uma aula e uma sala.');
+        if (!selectedTime || !selectedSala) {
+            setMessage('Por favor, selecione um horário e uma sala.');
             setTimeout(() => setMessage(''), 1000);
             return;
         }
 
-        const aulaIndex = parseInt(selectedAula.split(' ')[1]) - 1;
         const formattedDate = date.toISOString().split('T')[0];
         const token = localStorage.getItem('token');
 
         try {
             await axios.put(
                 `http://localhost:3001/reservar-sala/${selectedSala._id}`,
-                { aulaIndex, date: formattedDate, userId },
+                { hora: selectedTime, date: formattedDate, userId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             setMessage('Sala reservada com sucesso!');
-            setTimeout(() => setMessage(''), 1500);
+            setTimeout(() => {
+                setMessage('');
+                window.location.reload();
+            }, 1500); // Atualiza a página após 1,5 segundos
 
-            setSelectedAula('');
+            setSelectedTime('');
             setSelectedSala(null);
             setShouldUpdate(!shouldUpdate); // Atualiza os dados
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
         } catch (error) {
             console.error('Erro ao reservar sala:', error);
             setMessage('Erro ao reservar a sala.');
@@ -83,8 +118,31 @@ function ReservarSala() {
 
     const handleDateChange = (newDate) => {
         setDate(newDate);
-        setSelectedAula('');
+        setSelectedTime('');
         setSelectedSala(null);
+    };
+
+    const handleSalaSelect = (sala) => {
+        setSelectedSala(sala);
+        setSelectedTime(''); // Limpa o horário selecionado
+        const formattedDate = date.toISOString().split('T')[0];
+        fetchHorarios(sala._id, formattedDate); // Busca os horários para a sala e data selecionadas
+    };
+
+    const getAllTimes = () => {
+        if (!selectedSala) return [];
+
+        const formattedDate = date.toISOString().split('T')[0];
+        const dia = selectedSala.dias?.find(d => d.data === formattedDate);
+
+        if (!dia || !dia.aulas || !Array.isArray(dia.aulas)) {
+            return [];
+        }
+
+        return dia.aulas.map((aula) => ({
+            horario: aula.horario,
+            isOccupied: aula.occuped,
+        }));
     };
 
     addLocale('pt-BR', {
@@ -99,7 +157,6 @@ function ReservarSala() {
         dateFormat: 'dd/mm/yy',
         weekHeader: 'Sm',
     });
-
     return (
         <>
             <Header />
@@ -130,51 +187,52 @@ function ReservarSala() {
                                     {message}
                                 </div>
                             )}
+                            <label htmlFor="time-select">Selecione a sala:</label>
+                            <ul className="list-group">
+                                {data.map((item) => (
+                                    <li
+                                        key={item._id}
+                                        onClick={() => handleSalaSelect(item)}
+                                        className={`list-group-item bg-dark text-light ${selectedSala?._id === item._id ? 'active' : ''}`}
+                                    >
+                                        {item.nome}
+                                    </li>
+                                ))}
+                            </ul>
+
                             <div className="form-group mb-3">
-                                <label htmlFor="aula-select">Selecione a Aula:</label>
+                                <label htmlFor="time-select">Selecione o Horário:</label>
                                 <select
-                                    id="aula-select"
+                                    id="time-select"
                                     className="form-select bg-dark text-light"
-                                    value={selectedAula}
-                                    onChange={(e) => setSelectedAula(e.target.value)}
+                                    value={selectedTime}
+                                    onChange={(e) => setSelectedTime(e.target.value)}
                                 >
-                                    <option value="">-- Selecione uma Aula --</option>
-                                    {[...Array(10).keys()].map((aula) => (
-                                        <option key={aula + 1} value={`Aula ${aula + 1}`}>
-                                            Aula {aula + 1}
+                                    <option value="">-- Selecione um Horário --</option>
+                                    {getAllTimes().length > 0 ? (
+                                        getAllTimes().map(({ horario, isOccupied }) => (
+                                            <option
+                                                key={horario}
+                                                value={horario}
+                                                disabled={isOccupied}
+                                                className={isOccupied ? 'occupied-option' : ''}
+                                            >
+                                                {horario} {isOccupied && '(Ocupado)'}
+                                            </option>
+                                        ))
+                                    ) : (
+                                        <option value="" disabled>
+                                            Nenhum horário disponível
                                         </option>
-                                    ))}
+                                    )}
                                 </select>
                             </div>
-                            <ul className="list-group">
-                                {data.map((item) => {
-                                    const formattedDate = date.toISOString().split('T')[0];
-                                    const dia = item.dias.find(dia => dia.data === formattedDate);
-                                    const aulaIndex = parseInt(selectedAula.split(' ')[1]) - 1;
 
-                                    // Verifica se a aula está ocupada
-                                    const isOccupied = dia?.aulas[aulaIndex]?.occuped;
 
-                                    return (
-                                        <li
-                                            key={item._id}
-                                            onClick={() => !isOccupied && setSelectedSala(item)}
-                                            className={`list-group-item bg-dark text-light ${selectedSala?._id === item._id ? 'active' : ''
-                                                }`}
-                                            style={{
-                                                cursor: isOccupied ? 'not-allowed' : 'pointer',
-                                                opacity: isOccupied ? 0.5 : 1,
-                                            }}
-                                        >
-                                            {item.nome}
-                                        </li>
-                                    );
-                                })}
-                            </ul>
 
                             <button
                                 onClick={handleReservarSala}
-                                disabled={!selectedAula || !selectedSala}
+                                disabled={!selectedTime || !selectedSala}
                                 className="btn btn-primary w-100 mt-3 shadow"
                             >
                                 Reservar Sala

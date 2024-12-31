@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Header from '../layout/Header';
 
 function VerReservas() {
     const [salas, setSalas] = useState([]);
@@ -30,9 +29,9 @@ function VerReservas() {
     const formatarDataBrasileira = (data) => {
         const dataObj = new Date(data + 'T00:00:00');
         return dataObj.toLocaleDateString('pt-BR', {
-          timeZone: 'America/Sao_Paulo',
+            timeZone: 'America/Sao_Paulo',
         });
-      };
+    };
 
     const handleCancelReservation = async (salaId, diaIndex, aulaIndex) => {
         try {
@@ -100,7 +99,7 @@ function VerReservas() {
                                         <li key={`${sala._id}-${diaIndex}-${aulaIndex}`} className="list-group-item bg-secondary text-light">
                                             <p><strong>Sala:</strong> {sala.nome}</p>
                                             <p><strong>Data:</strong> {formatarDataBrasileira(dia.data) || 'Data não especificada'}</p>
-                                            <p><strong>Aula:</strong> {aula.aula || 'Aula não especificada'}</p>
+                                            <p><strong>Horário:</strong> {aula.horario || 'Horário não especificado'}</p>
                                             <button 
                                                 className="btn btn-danger"
                                                 onClick={() => handleCancelReservation(sala._id, diaIndex, aulaIndex)}

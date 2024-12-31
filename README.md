@@ -102,6 +102,11 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 ### Dia 16/12 Beta 1.1.5
 - **Função de Criação, Exclusão e Edição de Senhas:** Implementada a funcionalidade para criação, exclusão e edição de senhas no sistema, permitindo um controle mais eficiente sobre as credenciais de usuários.
 
+### Dia 31/12 Beta 1.2.0
+- **Troca de Aulas por Horários:** A funcionalidade de reservas foi alterada, substituindo o conceito de "aulas" por "horários", permitindo uma gestão mais precisa e flexível das reservas.
+  
+- **Não Exclusão Definitiva de Salas e Usuários:** O sistema agora não exclui mais salas e usuários de forma definitiva do banco de dados. Em vez disso, esses itens são desativados, garantindo que possam ser recuperados ou reativados futuramente, caso necessário.
+
 --- 
 
 ## Como Rodar o Projeto

@@ -50,6 +50,8 @@ const limiter = rateLimit({
     max: 100 // limit each IP to 100 requests per windowMs
 });
 
+
+
 app.use(limiter);
 app.use(helmet());
 
@@ -130,8 +132,8 @@ app.post('/login', async (req, res) => {
         const token = jwt.sign({ userId: user._id, nome: user.nome }, JWT_SECRET, { expiresIn: '1h' });
 
         // Retorna o token, userId e outras informações necessárias
-        res.json({ 
-            token, 
+        res.json({
+            token,
             userId: user._id,  // Envia o userId explicitamente
             role: user.role || 'user'  // Retorna o role, se existir
         });
@@ -143,12 +145,14 @@ app.post('/login', async (req, res) => {
 
 
 // PUT para reservar uma aula específica em uma sala em uma data específica
-app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
+app.put('/reservar-sala/:id', limiter ,authenticateToken, async (req, res) => {
+    console.log('ID da sala:', req.params.id);  // Verifique o ID aqui
     try {
         const { id } = req.params;
-        const { date, aulaIndex } = req.body;
-        const { userId, nome } = req.user;
+        const { date, hora } = req.body;  // Recebe 'hora' da requisição
+        const { userId, nome } = req.user; // ID do usuário e nome
 
+        // Verificar se o ID da sala é válido
         if (!ObjectId.isValid(id)) {
             return res.status(400).json({ message: 'ID inválido' });
         }
@@ -156,39 +160,49 @@ app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
         const database = client.db('teste');
         const collection = database.collection('salas');
 
-        // Tenta encontrar o dia específico para a sala
+        // Verifica a data na sala
         const query = {
             _id: new ObjectId(id),
             "dias.data": date
         };
 
+        // Índice da hora
+        const horaIndex = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'].indexOf(hora);
+
+        if (horaIndex === -1) {
+            return res.status(400).json({ message: 'Hora inválida' });
+        }
+
+        // Realiza a atualização se o dia já existir
         const update = {
             $set: {
-                [`dias.$.aulas.${aulaIndex}.occuped`]: true,
-                [`dias.$.aulas.${aulaIndex}.userId`]: new ObjectId(userId),
-                [`dias.$.aulas.${aulaIndex}.reservadoPor`]: nome
+                [`dias.$.aulas.${horaIndex}.occuped`]: true,
+                [`dias.$.aulas.${horaIndex}.userId`]: new ObjectId(userId),
+                [`dias.$.aulas.${horaIndex}.reservadoPor`]: nome,
+                [`dias.$.aulas.${horaIndex}.horario`]: hora // Define o horário corretamente
             }
         };
+        
 
-        // Tenta atualizar o dia específico com a reserva
         const result = await collection.updateOne(query, update);
 
-        // Se o dia não existir, cria um novo dia com as aulas
+        // Se o dia não existir, cria um novo dia
         if (result.matchedCount === 0) {
             const newDay = {
                 data: date,
-                aulas: Array(10).fill().map((_, index) => ({
-                    aula: `Aula ${index + 1}`,
-                    occuped: index === aulaIndex,
-                    userId: index === aulaIndex ? new ObjectId(userId) : null,
-                    reservadoPor: index === aulaIndex ? nome : null
+                aulas: ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'].map((hora, index) => ({
+                    horario: hora, // Preenche o horário corretamente
+                    occuped: index === horaIndex,
+                    userId: index === horaIndex ? new ObjectId(userId) : null,
+                    reservadoPor: index === horaIndex ? nome : null
                 }))
             };
+            
 
+            // Adiciona o novo dia
             const addDayQuery = { _id: new ObjectId(id) };
             const addDayUpdate = { $push: { dias: newDay } };
 
-            // Adiciona o novo dia
             const addDayResult = await collection.updateOne(addDayQuery, addDayUpdate);
 
             if (addDayResult.matchedCount === 0) {
@@ -196,16 +210,22 @@ app.put('/reservar-sala/:id', authenticateToken, async (req, res) => {
             }
         }
 
-        notifySalaChange(); // Notifica outros serviços, se necessário
+        // Notifica mudanças, caso necessário
+        notifySalaChange();
+
+        // Retorna uma mensagem de sucesso
         res.json({ message: 'Aula reservada com sucesso!' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erro ao reservar aula' });
     }
+    
 });
 
+
+
 // GET para buscar as reservas de uma sala em uma data específica
-app.get('/reservas/:id/:date', authenticateToken, async (req, res) => {
+app.get('/reservas/:id/:date', limiter, authenticateToken, async (req, res) => {
     try {
         const { id, date } = req.params;
 
@@ -228,12 +248,16 @@ app.get('/reservas/:id/:date', authenticateToken, async (req, res) => {
             return res.status(404).json({ message: 'Nenhuma reserva encontrada para a data especificada' });
         }
 
-        res.json(dia.aulas);
+        // Filtra as aulas para mostrar apenas as não ocupadas
+        const aulasDisponiveis = dia.aulas.filter(aula => !aula.occuped);
+
+        res.json(aulasDisponiveis);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Erro ao buscar reservas' });
     }
 });
+
 
 // GET para buscar as reservas de um usuário
 app.get('/minhas-reservas', authenticateToken, async (req, res) => {
@@ -248,7 +272,7 @@ app.get('/minhas-reservas', authenticateToken, async (req, res) => {
         // Filtrar reservas de cada sala para o usuário autenticado
         const reservas = salas.map(sala => {
             const diasReservados = sala.dias.map(dia => {
-                const aulasReservadas = dia.aulas.filter(aula => 
+                const aulasReservadas = dia.aulas.filter(aula =>
                     aula.occuped && aula.userId.toString() === userId // Filtra as aulas ocupadas pelo usuário
                 );
 
@@ -360,7 +384,7 @@ app.put('/admin/remover-ocupacao/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ message: 'Sala ou aula não encontrada' });
         }
 
-        io.emit('updateSalas', {salaId: id})
+        io.emit('updateSalas', { salaId: id })
 
         res.json({ message: 'Ocupação removida com sucesso!' });
     } catch (error) {
@@ -379,7 +403,8 @@ app.post('/admin/criar-sala', authenticateToken, async (req, res) => {
 
         const novaSala = {
             nome,
-            dias: dias || []  // Garantir que dias seja sempre um array
+            dias: dias || [],  // Garantir que dias seja sempre um array
+            isDeleted: false   // Define o campo isDeleted como false por padrão
         };
 
         const result = await collection.insertOne(novaSala);
@@ -397,17 +422,21 @@ app.post('/admin/criar-sala', authenticateToken, async (req, res) => {
     }
 });
 
+
 app.get('/usuarios', authenticateToken, async (req, res) => {
     try {
         const database = client.db('teste');
         const collection = database.collection('usuarios');
-        const dados = await collection.find({}).toArray();
-        res.json(dados);
+
+        const usuarios = await collection.find({ isDeleted: { $ne: true } }).toArray();
+
+        res.status(200).json(usuarios);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Erro ao buscar dados' });
+        console.error('Erro ao buscar usuários:', error);
+        res.status(500).json({ message: 'Erro ao buscar usuários' });
     }
 });
+
 
 // Rota: Criar novo usuário
 app.post('/usuarios', authenticateToken, async (req, res) => {
@@ -466,28 +495,36 @@ app.put('/usuarios/:id/senha', authenticateToken, async (req, res) => {
 });
 
 // Rota: Excluir usuário
-app.delete('/usuarios/:id', authenticateToken, async (req, res) => {
+app.put('/usuarios/:id', authenticateToken, async (req, res) => {
     const userId = req.params.id;
 
     try {
+        if (!ObjectId.isValid(userId)) {
+            return res.status(400).json({ message: 'ID inválido' });
+        }
+
         const database = client.db('teste');
         const collection = database.collection('usuarios');
 
-        const result = await collection.deleteOne({ _id: new ObjectId(userId) });
+        const result = await collection.updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: { isDeleted: true } }
+        );
 
-        if (result.deletedCount === 0) {
+        if (result.modifiedCount === 0) {
             return res.status(404).json({ message: 'Usuário não encontrado' });
         }
 
         res.status(200).json({ message: 'Usuário excluído com sucesso' });
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao excluir usuário:', error);
         res.status(500).json({ message: 'Erro ao excluir usuário' });
     }
 });
 
+
 // DELETE para excluir uma sala
-app.delete('/admin/excluir-sala/:id', authenticateToken, async (req, res) => {
+app.put('/admin/excluir-sala/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -498,18 +535,21 @@ app.delete('/admin/excluir-sala/:id', authenticateToken, async (req, res) => {
         const database = client.db('teste');
         const collection = database.collection('salas');
 
-        const result = await collection.deleteOne({ _id: new ObjectId(id) });
+        const result = await collection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { isDeleted: true } }
+        );
 
         notifySalaChange();
 
-        if (result.deletedCount === 0) {
+        if (result.modifiedCount === 0) {
             return res.status(404).json({ message: 'Sala não encontrada' });
         }
 
-        res.json({ message: 'Sala excluída com sucesso' });
+        res.json({ message: 'Sala marcada como excluída com sucesso' });
     } catch (error) {
-        console.error('Erro ao excluir sala:', error);
-        res.status(500).json({ message: 'Erro ao excluir sala' });
+        console.error('Erro ao marcar sala como excluída:', error);
+        res.status(500).json({ message: 'Erro ao marcar sala como excluída' });
     }
 });
 
@@ -519,7 +559,7 @@ app.get('/public/reservas', async (req, res) => {
         const collection = database.collection('salas');
 
         const reservas = await collection.find({}).toArray();
-        
+
         res.json(reservas);
     } catch (error) {
         console.error('Erro ao buscar reservas:', error);

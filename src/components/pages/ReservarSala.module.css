@@ -13,3 +13,8 @@
 .list-group-item.active {
     background-color: #007bff !important;
 }
+
+.occupied-option {
+    opacity: 0.5;
+    pointer-events: none;
+}
