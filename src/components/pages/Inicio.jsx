@@ -64,13 +64,14 @@ function Inicio() {
                 key={`${salaIndex}-${diaIndex}-${aulaIndex}`}
               >
                 <span>
-                  {sala.nome} - {aula.aula} - Reservado por {aula.reservadoPor} para {formatarDataBrasileira(dia.data)}
+                  {sala.nome} - {aula.horario || 'Horário não especificado'} - Reservado por {aula.reservadoPor || 'Não informado'} para {formatarDataBrasileira(dia.data)}
                 </span>
               </li>
-            ) 
+            )
         )
       )
     );
+    
   };
 
   return (

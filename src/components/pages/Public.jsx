@@ -101,12 +101,13 @@ const DiaReservas = ({ dia, formatDate }) => (
             key={index}
             className="list-group-item d-flex justify-content-between align-items-center list-group-item-danger"
           >
-            {aula.aula}
+            {aula.horario || 'Horário não especificado'}
             <span className="badge bg-danger">
-              Reservado por {aula.reservadoPor}
+              Reservado por {aula.reservadoPor || 'Não informado'}
             </span>
           </li>
         ))}
+
     </ul>
   </div>
 );

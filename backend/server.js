@@ -242,10 +242,32 @@ app.get('/reservas/:id/:date', limiter, authenticateToken, async (req, res) => {
             return res.status(404).json({ message: 'Sala não encontrada' });
         }
 
-        const dia = sala.dias.find(d => d.data === date);
+        // Verifique se o dia já existe
+        let dia = sala.dias.find(d => d.data === date);
 
         if (!dia) {
-            return res.status(404).json({ message: 'Nenhuma reserva encontrada para a data especificada' });
+            // Se o dia não existir, crie-o com os horários de 08:00 até 21:30
+            const horarios = [];
+            for (let hour = 8; hour <= 21; hour++) {
+                for (let minute = 0; minute <= 30; minute += 30) {
+                    const hourString = hour < 10 ? `0${hour}` : `${hour}`;
+                    const minuteString = minute === 0 ? '00' : '30';
+                    const horario = `${hourString}:${minuteString}`;
+                    horarios.push({ horario, occuped: false, userId: null, reservadoPor: null });
+                }
+            }
+
+            dia = {
+                data: date,
+                aulas: horarios
+            };
+
+            // Adiciona o novo dia com os horários
+            sala.dias.push(dia);
+            await collection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: { dias: sala.dias } }
+            );
         }
 
         // Filtra as aulas para mostrar apenas as não ocupadas
@@ -257,6 +279,8 @@ app.get('/reservas/:id/:date', limiter, authenticateToken, async (req, res) => {
         res.status(500).json({ message: 'Erro ao buscar reservas' });
     }
 });
+
+
 
 
 // GET para buscar as reservas de um usuário

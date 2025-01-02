@@ -107,6 +107,9 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
   
 - **Não Exclusão Definitiva de Salas e Usuários:** O sistema agora não exclui mais salas e usuários de forma definitiva do banco de dados. Em vez disso, esses itens são desativados, garantindo que possam ser recuperados ou reativados futuramente, caso necessário.
 
+### Dia 02/01 Beta 1.2.1
+- **Correção de Bugs:** Foram corrigidos diversos bugs identificados nas versões anteriores, melhorando a estabilidade do sistema e a experiência do usuário.
+
 --- 
 
 ## Como Rodar o Projeto

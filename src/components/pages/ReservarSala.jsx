@@ -83,6 +83,7 @@ function ReservarSala() {
         }
     };
 
+
     const handleReservarSala = async () => {
         if (!selectedTime || !selectedSala) {
             setMessage('Por favor, selecione um horário e uma sala.');
@@ -132,13 +133,14 @@ function ReservarSala() {
     const getAllTimes = () => {
         if (!selectedSala) return [];
 
-        const formattedDate = date.toISOString().split('T')[0];
+        const formattedDate = date.toISOString().split('T')[0];  // Formatação da data (YYYY-MM-DD)
         const dia = selectedSala.dias?.find(d => d.data === formattedDate);
 
         if (!dia || !dia.aulas || !Array.isArray(dia.aulas)) {
-            return [];
+            return []; // Caso não haja aulas ou o formato não seja válido
         }
 
+        // Mapeia os horários e marca como ocupados ou não
         return dia.aulas.map((aula) => ({
             horario: aula.horario,
             isOccupied: aula.occuped,
@@ -214,7 +216,7 @@ function ReservarSala() {
                                             <option
                                                 key={horario}
                                                 value={horario}
-                                                disabled={isOccupied}
+                                                disabled={isOccupied} // Desabilita a opção se estiver ocupada
                                                 className={isOccupied ? 'occupied-option' : ''}
                                             >
                                                 {horario} {isOccupied && '(Ocupado)'}
