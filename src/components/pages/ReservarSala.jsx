@@ -191,16 +191,19 @@ function ReservarSala() {
                             )}
                             <label htmlFor="time-select">Selecione a sala:</label>
                             <ul className="list-group">
-                                {data.map((item) => (
-                                    <li
-                                        key={item._id}
-                                        onClick={() => handleSalaSelect(item)}
-                                        className={`list-group-item bg-dark text-light ${selectedSala?._id === item._id ? 'active' : ''}`}
-                                    >
-                                        {item.nome}
-                                    </li>
-                                ))}
+                                {data
+                                    .filter((item) => !item.isDeleted) // Filtra as salas que não estão excluídas
+                                    .map((item) => (
+                                        <li
+                                            key={item._id}
+                                            onClick={() => handleSalaSelect(item)}
+                                            className={`list-group-item bg-dark text-light ${selectedSala?._id === item._id ? 'active' : ''}`}
+                                        >
+                                            {item.nome}
+                                        </li>
+                                    ))}
                             </ul>
+
 
                             <div className="form-group mb-3">
                                 <label htmlFor="time-select">Selecione o Horário:</label>

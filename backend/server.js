@@ -122,6 +122,11 @@ app.post('/login', async (req, res) => {
             return res.status(400).json({ message: 'Credenciais inválidas' });
         }
 
+        // Verifica se o usuário está desativado
+        if (user.isDeleted) {
+            return res.status(400).json({ message: 'Sua conta foi desativada. Entre em contato com o administrador.' });
+        }
+
         // Verifica a senha
         const isPasswordValid = await bcrypt.compare(senha, user.senha);
         if (!isPasswordValid) {
@@ -142,6 +147,7 @@ app.post('/login', async (req, res) => {
         res.status(500).json({ message: 'Erro ao fazer login' });
     }
 });
+
 
 
 // PUT para reservar uma aula específica em uma sala em uma data específica
@@ -528,23 +534,39 @@ app.put('/usuarios/:id', authenticateToken, async (req, res) => {
         }
 
         const database = client.db('teste');
-        const collection = database.collection('usuarios');
+        const usuariosCollection = database.collection('usuarios');
+        const salasCollection = database.collection('salas');
 
-        const result = await collection.updateOne(
+        // Atualiza o usuário para isDeleted: true
+        const userUpdateResult = await usuariosCollection.updateOne(
             { _id: new ObjectId(userId) },
             { $set: { isDeleted: true } }
         );
 
-        if (result.modifiedCount === 0) {
+        if (userUpdateResult.modifiedCount === 0) {
             return res.status(404).json({ message: 'Usuário não encontrado' });
         }
 
-        res.status(200).json({ message: 'Usuário excluído com sucesso' });
+        // Desocupa todas as reservas feitas pelo usuário
+        await salasCollection.updateMany(
+            { "dias.aulas.userId": new ObjectId(userId) },
+            {
+                $set: {
+                    "dias.$[].aulas.$[aula].occuped": false,
+                    "dias.$[].aulas.$[aula].userId": null,
+                    "dias.$[].aulas.$[aula].reservadoPor": null
+                }
+            },
+            { arrayFilters: [{ "aula.userId": new ObjectId(userId) }] }
+        );
+
+        res.status(200).json({ message: 'Usuário excluído e reservas desocupadas com sucesso.' });
     } catch (error) {
         console.error('Erro ao excluir usuário:', error);
-        res.status(500).json({ message: 'Erro ao excluir usuário' });
+        res.status(500).json({ message: 'Erro ao excluir usuário.' });
     }
 });
+
 
 
 // DELETE para excluir uma sala
@@ -579,15 +601,33 @@ app.put('/admin/excluir-sala/:id', authenticateToken, async (req, res) => {
 
 app.get('/public/reservas', async (req, res) => {
     try {
-        const database = client.db('teste');
-        const collection = database.collection('salas');
+        const db = client.db('teste');
+        const salasCollection = db.collection('salas');
+        const usersCollection = db.collection('usuarios');
 
-        const reservas = await collection.find({}).toArray();
+        // Busca os usuários com isDeleted: true
+        const deletedUsers = await usersCollection.find({ isDeleted: true }).toArray();
+        const deletedUserIds = deletedUsers.map(user => user._id.toString());
 
-        res.json(reservas);
+        // Busca as salas e filtra as reservas
+        const salas = await salasCollection.find({}).toArray();
+        const filteredSalas = salas.map(sala => {
+            const diasFiltrados = sala.dias.map(dia => ({
+                ...dia,
+                aulas: dia.aulas.filter(aula => aula.occuped && !deletedUserIds.includes(aula.userId?.toString()))
+            }));
+
+            // Retorna apenas os dias que possuem reservas válidas
+            return {
+                ...sala,
+                dias: diasFiltrados.filter(dia => dia.aulas.length > 0)
+            };
+        });
+
+        res.json(filteredSalas);
     } catch (error) {
-        console.error('Erro ao buscar reservas:', error);
-        res.status(500).json({ message: 'Erro ao buscar reservas' });
+        console.error('Erro ao buscar reservas públicas:', error);
+        res.status(500).json({ message: 'Erro ao buscar reservas públicas' });
     }
 });
 

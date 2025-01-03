@@ -110,6 +110,9 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 ### Dia 02/01 Beta 1.2.1
 - **Correção de Bugs:** Foram corrigidos diversos bugs identificados nas versões anteriores, melhorando a estabilidade do sistema e a experiência do usuário.
 
+### Dia 03/01 Beta 1.2.2
+- **Correção de Bugs:** Foram corrigidos bugs relacionados à visualização de usuários e salas deletadas, melhorando a precisão das informações exibidas no sistema.
+
 --- 
 
 ## Como Rodar o Projeto
