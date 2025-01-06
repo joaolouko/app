@@ -49,30 +49,47 @@ function Inicio() {
   };
 
   // Renderiza cada reserva
-  const renderizarReservas = () => {
-    if (data.length === 0) {
-      return <p className="text-warning">Nenhuma reserva encontrada.</p>;
-    }
+  // Função para calcular o horário de término
+const calcularHorarioFinal = (horarioInicial) => {
+  if (!horarioInicial) return 'Horário não especificado';
+  
+  const [horas, minutos] = horarioInicial.split(':').map(Number);
+  const data = new Date();
+  data.setHours(horas);
+  data.setMinutes(minutos + 30); // Adiciona 30 minutos
 
-    return data.map((sala, salaIndex) =>
-      sala.dias.map((dia, diaIndex) =>
-        dia.aulas.map(
-          (aula, aulaIndex) =>
-            aula.occuped && (
-              <li
-                className="list-group-item d-flex justify-content-between align-items-center bg-dark text-light"
-                key={`${salaIndex}-${diaIndex}-${aulaIndex}`}
-              >
-                <span>
-                  {sala.nome} - {aula.horario || 'Horário não especificado'} - Reservado por {aula.reservadoPor || 'Não informado'} para {formatarDataBrasileira(dia.data)}
-                </span>
-              </li>
-            )
-        )
+  // Formata o horário final no formato HH:MM
+  const horasFinais = String(data.getHours()).padStart(2, '0');
+  const minutosFinais = String(data.getMinutes()).padStart(2, '0');
+
+  return `${horasFinais}:${minutosFinais}`;
+};
+
+const renderizarReservas = () => {
+  if (data.length === 0) {
+    return <p className="text-warning">Nenhuma reserva encontrada.</p>;
+  }
+
+  return data.map((sala, salaIndex) =>
+    sala.dias.map((dia, diaIndex) =>
+      dia.aulas.map(
+        (aula, aulaIndex) =>
+          aula.occuped && (
+            <li
+              className="list-group-item d-flex justify-content-between align-items-center bg-dark text-light"
+              key={`${salaIndex}-${diaIndex}-${aulaIndex}`}
+            >
+              <span>
+                {sala.nome} - {aula.horario || 'Horário não especificado'} até {calcularHorarioFinal(aula.horario)} - 
+                Reservado por {aula.reservadoPor || 'Não informado'} para {formatarDataBrasileira(dia.data)}
+              </span>
+            </li>
+          )
       )
-    );
-    
-  };
+    )
+  );
+};
+
 
   return (
     <>

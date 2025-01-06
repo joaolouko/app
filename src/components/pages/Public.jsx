@@ -90,6 +90,20 @@ const SalaCard = ({ sala, formatDate }) => {
 };
 
 // Componente para exibir reservas de um dia específico
+// Função para calcular o horário de término
+const calcularHorarioFinal = (horarioInicial) => {
+  const [horas, minutos] = horarioInicial.split(':').map(Number);
+  const data = new Date();
+  data.setHours(horas);
+  data.setMinutes(minutos + 30); // Adiciona 30 minutos
+
+  // Formata o horário final no formato HH:MM
+  const horasFinais = String(data.getHours()).padStart(2, '0');
+  const minutosFinais = String(data.getMinutes()).padStart(2, '0');
+
+  return `${horasFinais}:${minutosFinais}`;
+};
+
 const DiaReservas = ({ dia, formatDate }) => (
   <div className="mb-3">
     <h4 className="mb-2">Data: {formatDate(dia.data)}</h4>
@@ -101,15 +115,15 @@ const DiaReservas = ({ dia, formatDate }) => (
             key={index}
             className="list-group-item d-flex justify-content-between align-items-center list-group-item-danger"
           >
-            {aula.horario || 'Horário não especificado'}
+            {aula.horario || 'Horário não especificado'} até {calcularHorarioFinal(aula.horario)}
             <span className="badge bg-danger">
               Reservado por {aula.reservadoPor || 'Não informado'}
             </span>
           </li>
         ))}
-
     </ul>
   </div>
 );
+
 
 export default Public;

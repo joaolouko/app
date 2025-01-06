@@ -113,6 +113,9 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 ### Dia 03/01 Beta 1.2.2
 - **Correção de Bugs:** Foram corrigidos bugs relacionados à visualização de usuários e salas deletadas, melhorando a precisão das informações exibidas no sistema.
 
+### Dia 06/01 Beta 1.2.3
+- **Melhorias no Design:** Foram realizadas melhorias no design da representação dos horários de reserva, incluindo a exibição do horário inicial e do horário final de cada aula, garantindo uma experiência visual mais clara e intuitiva para os usuários.
+
 --- 
 
 ## Como Rodar o Projeto
