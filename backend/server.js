@@ -9,6 +9,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const cron = require('node-cron')
 
 // URI do MongoDB
 const uri = "mongodb+srv://pires:13795272@perezdb.mfxofrn.mongodb.net/teste?retryWrites=true&w=majority";
@@ -24,6 +25,8 @@ async function connectToDatabase() {
     try {
         await client.connect();
         console.log('Conectado ao MongoDB com sucesso!');
+
+        limparReservasExpiradas();
     } catch (error) {
         console.error('Erro ao conectar ao MongoDB:', error);
     }
@@ -44,6 +47,74 @@ app.use(bodyParser.json());
 app.use(express.json());
 
 
+//esquema para retirar as reservas
+cron.schedule('0 0 * * *', async () => {
+    try {
+      console.log('Executando job de limpeza de reservas expiradas...');
+  
+      const database = client.db('teste');
+      const collection = database.collection('salas');
+  
+      const today = new Date().toISOString().split('T')[0]; // Data atual no formato YYYY-MM-DD
+  
+      // Remove as reservas que estão em dias passados
+      const result = await collection.updateMany(
+        { "dias.data": { $lt: today } },
+        {
+          $set: {
+            "dias.$[dia].aulas.$[aula].occuped": false,
+            "dias.$[dia].aulas.$[aula].userId": null,
+            "dias.$[dia].aulas.$[aula].reservadoPor": null,
+          }
+        },
+        {
+          arrayFilters: [
+            { "dia.data": { $lt: today } },
+            { "aula.occuped": true }
+          ]
+        }
+      );
+  
+      console.log(`Reservas expiradas desfeitas: ${result.modifiedCount}`);
+    } catch (error) {
+      console.error('Erro ao executar o job de limpeza de reservas:', error);
+    }
+  });
+
+
+// Função que limpa as reservas expiradas
+const limparReservasExpiradas = async () => {
+  try {
+    console.log('Executando limpeza de reservas expiradas...');
+
+    const database = client.db('teste');
+    const collection = database.collection('salas');
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Remove as reservas que estão em dias passados
+    const result = await collection.updateMany(
+      { "dias.data": { $lt: today } },
+      {
+        $set: {
+          "dias.$[dia].aulas.$[aula].occuped": false,
+          "dias.$[dia].aulas.$[aula].userId": null,
+          "dias.$[dia].aulas.$[aula].reservadoPor": null,
+        }
+      },
+      {
+        arrayFilters: [
+          { "dia.data": { $lt: today } },
+          { "aula.occuped": true }
+        ]
+      }
+    );
+
+    console.log(`Reservas expiradas desfeitas: ${result.modifiedCount}`);
+  } catch (error) {
+    console.error('Erro ao limpar reservas expiradas:', error);
+  }
+};
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes

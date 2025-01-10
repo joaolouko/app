@@ -202,6 +202,39 @@ function Admin() {
             setIsLoading(false);
         }
     };
+
+    const formatarHorario = (horarioInicio) => {
+        if (!horarioInicio) return 'Horário não especificado';
+      
+        const [horas, minutos] = horarioInicio.split(':').map(Number);
+      
+        // Calcula o horário de término adicionando 30 minutos
+        const dataInicio = new Date();
+        dataInicio.setHours(horas, minutos);
+      
+        const dataFim = new Date(dataInicio);
+        dataFim.setMinutes(dataInicio.getMinutes() + 30);
+      
+        // Formata os horários de início e término
+        const horarioFormatadoInicio = `${dataInicio
+          .getHours()
+          .toString()
+          .padStart(2, '0')}:${dataInicio
+          .getMinutes()
+          .toString()
+          .padStart(2, '0')}`;
+      
+        const horarioFormatadoFim = `${dataFim
+          .getHours()
+          .toString()
+          .padStart(2, '0')}:${dataFim
+          .getMinutes()
+          .toString()
+          .padStart(2, '0')}`;
+      
+        return `${horarioFormatadoInicio} - ${horarioFormatadoFim}`;
+      };
+      
     
     // Função para gerar os horários de aulas de 30 em 30 minutos (ajuste conforme necessário)
     const generateAulas = () => {
@@ -298,43 +331,41 @@ function Admin() {
                         >
                             <span>{sala.nome}</span>
                             <div className="d-flex flex-column">
-                                {sala.dias && sala.dias.length > 0 ? (
-                                    <>
-                                        <select
-                                            value={selectedReservas[sala._id] || ''}
-                                            onChange={(e) =>
-                                                handleSelectChange(sala._id, e.target.value)
-                                            }
-                                            className="form-select mb-1 bg-dark text-light"
-                                        >
-                                            <option value="">Selecione uma reserva</option>
-                                            {sala.dias.map((dia, diaIndex) =>
-                                                dia.aulas.map(
-                                                    (aula, aulaIndex) =>
-                                                        aula.occuped && (
-                                                            <option
-                                                                key={`${diaIndex}-${aulaIndex}`}
-                                                                value={`${diaIndex}-${aulaIndex}`}
-                                                            >
-                                                                {dia.data || 'Sem data'} -{' '}
-                                                                {aula.aula || 'Aula não especificada'} - Ocupada
-                                                            </option>
-                                                        )
-                                                )
-                                            )}
-                                        </select>
-                                        <button
-                                            onClick={() => handleEditSala(sala._id)}
-                                            disabled={!selectedReservas[sala._id] || isLoading}
-                                            className="btn btn-danger mb-2"
-                                        >
-                                            Remover Ocupação
-                                        </button>
-                                    </>
-                                ) : (
-                                    <p>Sem reservas</p>
-                                )}
-                            </div>
+  {sala.dias && sala.dias.length > 0 ? (
+    <>
+      <select
+        value={selectedReservas[sala._id] || ''}
+        onChange={(e) => handleSelectChange(sala._id, e.target.value)}
+        className="form-select mb-1 bg-dark text-light"
+      >
+        <option value="">Selecione uma reserva</option>
+        {sala.dias.map((dia, diaIndex) =>
+          dia.aulas.map((aula, aulaIndex) =>
+            aula.occuped && (
+              <option
+                key={`${diaIndex}-${aulaIndex}`}
+                value={`${diaIndex}-${aulaIndex}`}
+              >
+                {dia.data || 'Sem data'} -{' '}
+                {formatarHorario(aula.horario)} - Ocupada
+              </option>
+            )
+          )
+        )}
+      </select>
+      <button
+        onClick={() => handleEditSala(sala._id)}
+        disabled={!selectedReservas[sala._id] || isLoading}
+        className="btn btn-danger mb-2"
+      >
+        Remover Ocupação
+      </button>
+    </>
+  ) : (
+    <p>Sem reservas</p>
+  )}
+</div>
+
                             <button
                                 onClick={() => handleDeleteSala(sala._id)}
                                 className="btn btn-danger"
