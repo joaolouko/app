@@ -120,6 +120,10 @@ Este projeto tem como objetivo a criação de um sistema de reservas de salas pa
 - **Correção de Bugs de Visualização:** Foram corrigidos bugs que afetavam a precisão das informações exibidas nas reservas.
 - **Desocupação Automática:** Agora, as reservas que ultrapassam o dia reservado são automaticamente desocupadas, garantindo que as salas fiquem disponíveis após o uso e evitando bloqueios indevidos.
 
+
+### Dia 10/01 S.A.S 1.0
+- **Visualização na página de administração:** Foi adicionada a visualização de quem reservou cada sala na página do administrador.
+- **Versão final:** A versão final do sistema foi lançada, intitulada de S.A.S 1.0
 --- 
 
 ## Como Rodar o Projeto

@@ -9,7 +9,7 @@ const socket = io('http://localhost:3001');
 function Admin() {
     const navigate = useNavigate();
     const [salas, setSalas] = useState([]);
-    const [usuario, setUsuario ] = useState([]);
+    const [usuario, setUsuario] = useState([]);
 
     const [newSalaName, setNewSalaName] = useState('');
     const [selectedReservas, setSelectedReservas] = useState({});
@@ -31,7 +31,7 @@ function Admin() {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
             });
-    
+
             // Filtra apenas as salas que não estão marcadas como excluídas
             const activeSalas = response.data.filter(sala => !sala.isDeleted);
             setSalas(activeSalas);
@@ -39,7 +39,7 @@ function Admin() {
             console.error('Erro ao buscar salas:', error);
         }
     };
-    
+
 
     const fetchUsuarios = async () => {
         try {
@@ -71,8 +71,8 @@ function Admin() {
         };
     }, [navigate]);
 
-     // Criar usuário
-     const handleCreateUser = async () => {
+    // Criar usuário
+    const handleCreateUser = async () => {
         if (newUserPassword !== confirmPassword) {
             setPasswordError('As senhas não coincidem!');
             return;
@@ -121,7 +121,7 @@ function Admin() {
     // Deletar usuário
     const handleDeleteUser = async (id) => {
         if (!window.confirm('Tem certeza que deseja excluir este usuário?')) return;
-    
+
         try {
             const response = await axios.put(
                 `http://localhost:3001/usuarios/${id}`,
@@ -137,7 +137,7 @@ function Admin() {
             alert('Erro ao excluir usuário');
         }
     };
-    
+
 
 
     // Handle removing a reservation
@@ -173,10 +173,10 @@ function Admin() {
     const handleCreateSala = async (e) => {
         e.preventDefault();
         if (newSalaName.trim() === '') return;
-    
+
         try {
             setIsLoading(true);
-    
+
             // Gerando horários para cada dia da semana
             const dias = Array(7) // Supondo uma semana como exemplo
                 .fill(null)
@@ -184,7 +184,7 @@ function Admin() {
                     data: '', // Adicione a lógica de preenchimento de data, se necessário
                     aulas: generateAulas(), // Gerando os horários para 6 aulas por dia
                 }));
-    
+
             await axios.post(
                 'http://localhost:3001/admin/criar-sala',
                 { nome: newSalaName, dias },
@@ -205,43 +205,43 @@ function Admin() {
 
     const formatarHorario = (horarioInicio) => {
         if (!horarioInicio) return 'Horário não especificado';
-      
+
         const [horas, minutos] = horarioInicio.split(':').map(Number);
-      
+
         // Calcula o horário de término adicionando 30 minutos
         const dataInicio = new Date();
         dataInicio.setHours(horas, minutos);
-      
+
         const dataFim = new Date(dataInicio);
         dataFim.setMinutes(dataInicio.getMinutes() + 30);
-      
+
         // Formata os horários de início e término
         const horarioFormatadoInicio = `${dataInicio
-          .getHours()
-          .toString()
-          .padStart(2, '0')}:${dataInicio
-          .getMinutes()
-          .toString()
-          .padStart(2, '0')}`;
-      
+            .getHours()
+            .toString()
+            .padStart(2, '0')}:${dataInicio
+                .getMinutes()
+                .toString()
+                .padStart(2, '0')}`;
+
         const horarioFormatadoFim = `${dataFim
-          .getHours()
-          .toString()
-          .padStart(2, '0')}:${dataFim
-          .getMinutes()
-          .toString()
-          .padStart(2, '0')}`;
-      
+            .getHours()
+            .toString()
+            .padStart(2, '0')}:${dataFim
+                .getMinutes()
+                .toString()
+                .padStart(2, '0')}`;
+
         return `${horarioFormatadoInicio} - ${horarioFormatadoFim}`;
-      };
-      
-    
+    };
+
+
     // Função para gerar os horários de aulas de 30 em 30 minutos (ajuste conforme necessário)
     const generateAulas = () => {
         const aulas = [];
         let startHour = 8; // Início às 08:00
         let endHour = 22;  // Fim às 22:00
-    
+
         for (let hour = startHour; hour < endHour; hour++) {
             for (let minute = 0; minute < 60; minute += 30) {
                 const hora = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
@@ -252,10 +252,10 @@ function Admin() {
                 });
             }
         }
-    
+
         return aulas; // Retorna o array com os horários gerados
     };
-    
+
 
     // Handle deleting a sala
     const handleDeleteSala = async (id) => {
@@ -274,10 +274,10 @@ function Admin() {
             console.error('Erro ao excluir sala:', error);
         }
     };
-    
-    
 
-    
+
+
+
     // Logout function
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -331,40 +331,40 @@ function Admin() {
                         >
                             <span>{sala.nome}</span>
                             <div className="d-flex flex-column">
-  {sala.dias && sala.dias.length > 0 ? (
-    <>
-      <select
-        value={selectedReservas[sala._id] || ''}
-        onChange={(e) => handleSelectChange(sala._id, e.target.value)}
-        className="form-select mb-1 bg-dark text-light"
-      >
-        <option value="">Selecione uma reserva</option>
-        {sala.dias.map((dia, diaIndex) =>
-          dia.aulas.map((aula, aulaIndex) =>
-            aula.occuped && (
-              <option
-                key={`${diaIndex}-${aulaIndex}`}
-                value={`${diaIndex}-${aulaIndex}`}
-              >
-                {dia.data || 'Sem data'} -{' '}
-                {formatarHorario(aula.horario)} - Ocupada
-              </option>
-            )
-          )
-        )}
-      </select>
-      <button
-        onClick={() => handleEditSala(sala._id)}
-        disabled={!selectedReservas[sala._id] || isLoading}
-        className="btn btn-danger mb-2"
-      >
-        Remover Ocupação
-      </button>
-    </>
-  ) : (
-    <p>Sem reservas</p>
-  )}
-</div>
+                                {sala.dias && sala.dias.length > 0 ? (
+                                    <>
+                                        <select
+                                            value={selectedReservas[sala._id] || ''}
+                                            onChange={(e) => handleSelectChange(sala._id, e.target.value)}
+                                            className="form-select mb-1 bg-dark text-light"
+                                        >
+                                            <option value="">Selecione uma reserva</option>
+                                            {sala.dias.map((dia, diaIndex) =>
+                                                dia.aulas.map((aula, aulaIndex) =>
+                                                    aula.occuped && (
+                                                        <option
+                                                            key={`${diaIndex}-${aulaIndex}`}
+                                                            value={`${diaIndex}-${aulaIndex}`}
+                                                        >
+                                                            {dia.data || 'Sem data'} -{' '}
+                                                            {formatarHorario(aula.horario)} - Ocupada por {aula.reservadoPor}
+                                                        </option>
+                                                    )
+                                                )
+                                            )}
+                                        </select>
+                                        <button
+                                            onClick={() => handleEditSala(sala._id)}
+                                            disabled={!selectedReservas[sala._id] || isLoading}
+                                            className="btn btn-danger mb-2"
+                                        >
+                                            Remover Ocupação
+                                        </button>
+                                    </>
+                                ) : (
+                                    <p>Sem reservas</p>
+                                )}
+                            </div>
 
                             <button
                                 onClick={() => handleDeleteSala(sala._id)}
@@ -395,36 +395,36 @@ function Admin() {
                     </button>
                 </div>
             </form>
-                 
+
             <h3 className="mb-4">Usuários</h3>
 
             {/* Lista de Usuários */}
             <ul className="list-group mb-4" style={{ maxHeight: '250px', overflowY: 'auto' }}>
                 {usuario && usuario.length > 0 ? (
                     usuario
-                    .filter((u) => u.nome !== "Admin")
-                    .map((u) => (
-                        <li
-                            key={u._id}
-                            className="list-group-item d-flex justify-content-between align-items-center bg-secondary text-light"
-                        >
-                            <span>{u.nome}</span>
-                            <div>
-                                <button
-                                    onClick={() => setUserToEdit(u._id)}
-                                    className="btn btn-warning btn-sm me-2"
-                                >
-                                    Editar Senha
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteUser(u._id)}
-                                    className="btn btn-danger btn-sm"
-                                >
-                                    Excluir
-                                </button>
-                            </div>
-                        </li>
-                    ))
+                        .filter((u) => u.nome !== "Admin")
+                        .map((u) => (
+                            <li
+                                key={u._id}
+                                className="list-group-item d-flex justify-content-between align-items-center bg-secondary text-light"
+                            >
+                                <span>{u.nome}</span>
+                                <div>
+                                    <button
+                                        onClick={() => setUserToEdit(u._id)}
+                                        className="btn btn-warning btn-sm me-2"
+                                    >
+                                        Editar Senha
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteUser(u._id)}
+                                        className="btn btn-danger btn-sm"
+                                    >
+                                        Excluir
+                                    </button>
+                                </div>
+                            </li>
+                        ))
                 ) : (
                     <p className="text-center">Nenhum usuário disponível</p>
                 )}
@@ -481,7 +481,7 @@ function Admin() {
                 </div>
             )}
 
-            
+
             {/* Botão de logout */}
             <button
                 className="btn btn-danger w-100"
