@@ -1,7 +1,7 @@
 
 ---
 
-# Site de Reservas de Salas do IFC de Sombrio
+# Sistema de Agendamento de Salas (S.A.S)
 
 Este projeto tem como objetivo a criação de um sistema de reservas de salas para o Instituto Federal Catarinense (IFC) de Sombrio. O sistema permite que usuários façam login, reservem salas disponíveis e os administradores gerenciem as salas através de uma interface dedicada.
 
